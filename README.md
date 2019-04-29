@@ -5,6 +5,8 @@
 **IMPORTANT** This is work in progress; some stuff, specially the macros, may
 panic, or worst go into infinite loops, at compile time under some inputs.
 
+## [API docs](https://japaric.github.io/ufmt/ufmt/)
+
 ## License
 
 All source code (including code snippets) is licensed under either of
