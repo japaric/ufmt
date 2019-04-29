@@ -1,0 +1,8 @@
+[package]
+name = "ufmt"
+version = "0.1.0"
+authors = ["Jorge Aparicio <jorge@japaric.io>"]
+edition = "2018"
+
+[dependencies]
+ufmt-macros = { path = "macros" }
