@@ -652,7 +652,7 @@ tuple!(A, B, C, D, E, F, G, H, I, J, K, L; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 #[cfg(test)]
 mod tests {
-    use super::{derive::uDebug, uDebug, uDisplay, uWrite, uwrite};
+    use super::{derive::uDebug, uDebug, uWrite, uwrite};
 
     impl uWrite for String {
         type Error = !;
