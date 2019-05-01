@@ -650,6 +650,74 @@ tuple!(A, B, C, D, E, F, G, H, I, J; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 tuple!(A, B, C, D, E, F, G, H, I, J, K; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 tuple!(A, B, C, D, E, F, G, H, I, J, K, L; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
 
+macro_rules! hex {
+    ($self:expr, $w:expr, $N:expr) => {{
+        let mut buf: [u8; $N] = unsafe { core::mem::uninitialized() };
+
+        let i = hex(*$self as usize, &mut buf);
+
+        unsafe {
+            $w.write(str::from_utf8_unchecked(
+                buf.get(i..).unwrap_or_else(|| debug_unreachable!()),
+            ))
+        }
+    }};
+}
+
+fn hex(mut n: usize, buf: &mut [u8]) -> usize {
+    let mut i = buf.len() - 1;
+
+    loop {
+        let d = (n % 16) as u8;
+        *buf.get_mut(i)
+            .unwrap_or_else(|| unsafe { debug_unreachable!() }) =
+            if d < 10 { d + b'0' } else { (d - 10) + b'a' };
+        n = n / 16;
+
+        i -= 1;
+        if n == 0 {
+            break;
+        }
+    }
+
+    *buf.get_mut(i)
+        .unwrap_or_else(|| unsafe { debug_unreachable!() }) = b'x';
+    i -= 1;
+
+    *buf.get_mut(i)
+        .unwrap_or_else(|| unsafe { debug_unreachable!() }) = b'0';
+
+    i
+}
+
+impl<T> uDebug for *const T {
+    #[cfg(target_pointer_width = "32")]
+    fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        hex!(self, w, 10)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        hex!(self, w, 18)
+    }
+}
+
+impl<T> uDebug for *mut T {
+    #[inline(always)]
+    fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        (*self as *const T).fmt(w)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{derive::uDebug, uDebug, uWrite, uwrite};
@@ -749,6 +817,33 @@ mod tests {
         assert_eq!(
             uformat!("{:?}", X::C { x: 0, y: 1 }).unwrap(),
             "C { x: 0, y: 1 }"
+        );
+    }
+
+    #[test]
+    fn hex() {
+        assert_eq!(uformat!("{:?}", 1 as *const u8).unwrap(), "0x1");
+        assert_eq!(uformat!("{:?}", 0xf as *const u8).unwrap(), "0xf");
+        assert_eq!(uformat!("{:?}", 0xff as *const u8).unwrap(), "0xff");
+        assert_eq!(uformat!("{:?}", 0xfff as *const u8).unwrap(), "0xfff");
+        assert_eq!(uformat!("{:?}", 0xffff as *const u8).unwrap(), "0xffff");
+        assert_eq!(uformat!("{:?}", 0xfffff as *const u8).unwrap(), "0xfffff");
+        assert_eq!(uformat!("{:?}", 0xffffff as *const u8).unwrap(), "0xffffff");
+        assert_eq!(
+            uformat!("{:?}", 0xfffffff as *const u8).unwrap(),
+            "0xfffffff"
+        );
+        assert_eq!(
+            uformat!("{:?}", 0xffffffff as *const u8).unwrap(),
+            "0xffffffff"
+        );
+
+        #[cfg(target_pointer_width = "64")]
+        assert_eq!(uformat!("{:?}", 1 as *mut u8).unwrap(), "0x1");
+        #[cfg(target_pointer_width = "64")]
+        assert_eq!(
+            uformat!("{:?}", 0xfffffffff as *const u8).unwrap(),
+            "0xfffffffff"
         );
     }
 

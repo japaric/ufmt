@@ -152,7 +152,7 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
                 let arg = args.next().expect("FIXME");
                 quote!(
                     #[allow(unreachable_code)]
-                    match ufmt::uDisplay::fmt(&#arg, formatter) {
+                    match ufmt::uDisplay::fmt(&(#arg), formatter) {
                         Err(e) => return Err(e),
                         Ok(_) => {}
                     }
@@ -163,7 +163,7 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
                 let arg = args.next().expect("FIXME");
                 quote!(
                     #[allow(unreachable_code)]
-                    match ufmt::uDebug::fmt(&#arg, formatter) {
+                    match ufmt::uDebug::fmt(&(#arg), formatter) {
                         Err(e) => return Err(e),
                         Ok(_) => {}
                     }
