@@ -734,6 +734,25 @@ mod tests {
     }
 
     #[test]
+    fn enum_() {
+        #[derive(uDebug)]
+        enum X {
+            A,
+            B(u8, u16),
+            C { x: u8, y: u16 },
+        }
+
+        assert_eq!(uformat!("{:?}", X::A).unwrap(), "A");
+
+        assert_eq!(uformat!("{:?}", X::B(0, 1)).unwrap(), "B(0, 1)");
+
+        assert_eq!(
+            uformat!("{:?}", X::C { x: 0, y: 1 }).unwrap(),
+            "C { x: 0, y: 1 }"
+        );
+    }
+
+    #[test]
     fn tuples() {
         assert_eq!(uformat!("{:?}", ()).unwrap(), "()");
         assert_eq!(uformat!("{:?}", (1,)).unwrap(), "(1,)");

@@ -9,6 +9,7 @@ proc-macro = true
 
 [dependencies]
 quote = "0.6.12"
+proc-macro2 = "0.4.29"
 
 [dependencies.syn]
 features = ["full"]
