@@ -652,7 +652,7 @@ tuple!(A, B, C, D, E, F, G, H, I, J, K, L; 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 #[cfg(test)]
 mod tests {
-    use super::{derive::uDebug, uDebug, uDisplay, uWrite, uwrite};
+    use super::{derive::uDebug, uDebug, uWrite, uwrite};
 
     impl uWrite for String {
         type Error = !;
@@ -730,6 +730,25 @@ mod tests {
         assert_eq!(
             uformat!("{:?}", Pair { x: 1, y: 2 }).unwrap(),
             "Pair { x: 1, y: 2 }"
+        );
+    }
+
+    #[test]
+    fn enum_() {
+        #[derive(uDebug)]
+        enum X {
+            A,
+            B(u8, u16),
+            C { x: u8, y: u16 },
+        }
+
+        assert_eq!(uformat!("{:?}", X::A).unwrap(), "A");
+
+        assert_eq!(uformat!("{:?}", X::B(0, 1)).unwrap(), "B(0, 1)");
+
+        assert_eq!(
+            uformat!("{:?}", X::C { x: 0, y: 1 }).unwrap(),
+            "C { x: 0, y: 1 }"
         );
     }
 

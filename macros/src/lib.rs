@@ -1,22 +1,25 @@
+#![deny(warnings)]
+
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
 
+use proc_macro2::Span;
 use syn::{
     parse::{self, Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    Data, DeriveInput, Expr, Fields, LitStr, Token,
+    Data, DeriveInput, Expr, Fields, Ident, LitStr, Token,
 };
 
 #[proc_macro_derive(uDebug)]
 pub fn debug(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match input.data {
+    let ident = &input.ident;
+    let ts = match input.data {
         Data::Struct(data) => {
-            let ident = &input.ident;
             let ident_s = ident.to_string();
 
             let fields = match data.fields {
@@ -48,13 +51,80 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 }
 
             )
-            .into()
         }
 
-        Data::Enum(_data) => unimplemented!(),
+        Data::Enum(data) => {
+            let arms = data
+                .variants
+                .iter()
+                .map(|var| {
+                    let variant = &var.ident;
+                    let variant_s = variant.to_string();
 
-        Data::Union(_data) => unimplemented!(),
-    }
+                    match &var.fields {
+                        Fields::Named(fields) => {
+                            let mut pats = Vec::with_capacity(fields.named.len());
+                            let mut methods = Vec::with_capacity(fields.named.len());
+                            for field in &fields.named {
+                                let ident = field.ident.as_ref().unwrap();
+                                let ident_s = ident.to_string();
+
+                                pats.push(quote!(#ident));
+                                methods.push(quote!(field(#ident_s, #ident)?));
+                            }
+
+                            quote!(
+                                #ident::#variant { #(#pats),* } => {
+                                    w.debug_struct(#variant_s)?#(.#methods)*.finish()?;
+                                }
+                            )
+                        }
+
+                        Fields::Unnamed(fields) => {
+                            let pats = &(0..fields.unnamed.len())
+                                .map(|i| Ident::new(&format!("_{}", i), Span::call_site()))
+                                .collect::<Vec<_>>();
+
+                            quote!(
+                                #ident::#variant(#(#pats),*) => {
+                                    w.debug_tuple(#variant_s)?#(.field(#pats)?)*.finish()?;
+                                }
+                            )
+                        }
+
+                        Fields::Unit => quote!(
+                            #ident::#variant => {
+                                w.write(#variant_s)?;
+                            }
+                        ),
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            quote!(
+                impl ufmt::uDebug for #ident {
+                    fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+                        where
+                        W: ufmt::uWrite,
+                    {
+                        match self {
+                            #(#arms),*
+                        }
+
+                        Ok(())
+                    }
+                }
+            )
+        }
+
+        Data::Union(..) => {
+            return parse::Error::new(Span::call_site(), "this trait cannot be derived for unions")
+                .to_compile_error()
+                .into();
+        }
+    };
+
+    ts.into()
 }
 
 #[proc_macro]
@@ -72,7 +142,7 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
         .map(|piece| match piece {
             Piece::Str(s) => quote!(
                 #[allow(unreachable_code)]
-                match uDisplay::fmt(#s, formatter) {
+                match ufmt::uDisplay::fmt(#s, formatter) {
                     Err(e) => return Err(e),
                     Ok(_) => {},
                 }
@@ -82,7 +152,7 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
                 let arg = args.next().expect("FIXME");
                 quote!(
                     #[allow(unreachable_code)]
-                    match uDisplay::fmt(&#arg, formatter) {
+                    match ufmt::uDisplay::fmt(&#arg, formatter) {
                         Err(e) => return Err(e),
                         Ok(_) => {}
                     }
@@ -93,7 +163,7 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
                 let arg = args.next().expect("FIXME");
                 quote!(
                     #[allow(unreachable_code)]
-                    match uDebug::fmt(&#arg, formatter) {
+                    match ufmt::uDebug::fmt(&#arg, formatter) {
                         Err(e) => return Err(e),
                         Ok(_) => {}
                     }
@@ -114,7 +184,6 @@ struct Input {
     formatter: Expr,
     _comma: Token![,],
     literal: LitStr,
-    // FIXME
     _comma2: Token![,],
     args: Punctuated<Expr, Token![,]>,
 }
