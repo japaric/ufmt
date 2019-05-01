@@ -139,7 +139,16 @@ pub trait uWrite {
         })
     }
 
-    // TODO debug_map
+    /// Creates a `DebugMap` builder designed to assist with creation of `fmt::Debug`
+    /// implementations for map-like structures.
+    fn debug_map(&mut self) -> Result<DebugMap<Self>, Self::Error> {
+        self.write("{")?;
+
+        Ok(DebugMap {
+            first: true,
+            writer: self,
+        })
+    }
 }
 
 /// A struct to help with `fmt::Debug` implementations.
@@ -209,6 +218,59 @@ where
     /// Finishes output and returns any error encountered.
     pub fn finish(&mut self) -> Result<&mut Self, W::Error> {
         self.writer.write(")")?;
+
+        Ok(self)
+    }
+}
+
+/// A struct to help with `fmt::Debug` implementations.
+///
+/// This is useful when you wish to output a formatted map as a part of your `Debug::fmt`
+/// implementation.
+pub struct DebugMap<'a, W>
+where
+    W: uWrite + ?Sized,
+{
+    first: bool,
+    writer: &'a mut W,
+}
+
+impl<'a, W> DebugMap<'a, W>
+where
+    W: uWrite,
+{
+    /// Adds a new entry to the map output.
+    pub fn entry(&mut self, key: &impl uDebug, value: &impl uDebug) -> Result<&mut Self, W::Error> {
+        if self.first {
+            self.first = false;
+        } else {
+            self.writer.write(", ")?;
+        }
+
+        key.fmt(self.writer)?;
+        self.writer.write(": ")?;
+        value.fmt(self.writer)?;
+
+        Ok(self)
+    }
+
+    /// Adds the contents of an iterator of entries to the map output.
+    pub fn entries<K, V, I>(&mut self, entries: I) -> Result<&mut Self, W::Error>
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: uDebug,
+        V: uDebug,
+    {
+        for (k, v) in entries.into_iter() {
+            self.entry(&k, &v)?;
+        }
+
+        Ok(self)
+    }
+
+    /// Finishes output and returns any error encountered.
+    pub fn finish(&mut self) -> Result<&mut Self, W::Error> {
+        self.writer.write("}")?;
 
         Ok(self)
     }
@@ -635,6 +697,26 @@ mod tests {
             uformat!("The answer is {}", 42).unwrap(),
             "The answer is 42"
         );
+    }
+
+    #[test]
+    fn debug_map() {
+        struct Map;
+
+        impl uDebug for Map {
+            fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+            where
+                W: uWrite,
+            {
+                w.debug_map()?
+                    .entry(&1, &2)?
+                    .entries([(2, 3), (3, 4)].iter().cloned())?
+                    .finish()?;
+                Ok(())
+            }
+        }
+
+        assert_eq!(uformat!("{:?}", Map).unwrap(), "{1: 2, 2: 3, 3: 4}");
     }
 
     #[test]
