@@ -117,7 +117,11 @@ pub fn debug(input: TokenStream) -> TokenStream {
             )
         }
 
-        Data::Union(_data) => unimplemented!(),
+        Data::Union(..) => {
+            return parse::Error::new(Span::call_site(), "this trait cannot be derived for unions")
+                .to_compile_error()
+                .into();
+        }
     };
 
     ts.into()
