@@ -4,7 +4,8 @@ main() {
     cargo check --target $TARGET
 
     if [ $TRAVIS_RUST_VERSION = nightly ] && [ $TARGET = x86_64-unknown-linux-gnu ]; then
-        cargo test
+        cargo test --features std
+        ( cd macros && cargo test )
     fi
 }
 

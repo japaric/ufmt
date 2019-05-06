@@ -6,3 +6,9 @@ edition = "2018"
 
 [dependencies]
 ufmt-macros = { path = "macros" }
+ufmt-write = { path = "write" }
+
+# NOTE do NOT add an `alloc` feature before the alloc crate is stabilized
+[features]
+# NOTE do NOT turn `std` into a default feature; this is a no-std first crate
+std = ["ufmt-write/std"]

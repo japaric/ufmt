@@ -10,7 +10,7 @@ use syn::{
     parse::{self, Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    Data, DeriveInput, Expr, Fields, Ident, LitStr, Token,
+    Data, DeriveInput, Expr, Fields, Ident, IntSuffix, LitInt, LitStr, Token,
 };
 
 #[proc_macro_derive(uDebug)]
@@ -22,31 +22,44 @@ pub fn debug(input: TokenStream) -> TokenStream {
         Data::Struct(data) => {
             let ident_s = ident.to_string();
 
-            let fields = match data.fields {
-                Fields::Named(fields) => fields
-                    .named
-                    .iter()
-                    .map(|field| {
-                        let ident = field.ident.as_ref().expect("UNREACHABLE");
-                        let name = ident.to_string();
+            let body = match data.fields {
+                Fields::Named(fields) => {
+                    let fields = fields
+                        .named
+                        .iter()
+                        .map(|field| {
+                            let ident = field.ident.as_ref().expect("UNREACHABLE");
+                            let name = ident.to_string();
 
-                        quote!(field(#name, &self.#ident)?)
-                    })
-                    .collect::<Vec<_>>(),
+                            quote!(field(#name, &self.#ident)?)
+                        })
+                        .collect::<Vec<_>>();
 
-                Fields::Unnamed(_) => unimplemented!(),
+                    quote!(f.debug_struct(#ident_s)?#(.#fields)*.finish())
+                }
 
-                Fields::Unit => unimplemented!(),
+                Fields::Unnamed(fields) => {
+                    let fields = (0..fields.unnamed.len())
+                        .map(|i| {
+                            let i = LitInt::new(i as u64, IntSuffix::None, Span::call_site());
+
+                            quote!(field(&self.#i)?)
+                        })
+                        .collect::<Vec<_>>();
+
+                    quote!(f.debug_tuple(#ident_s)?#(.#fields)*.finish())
+                }
+
+                Fields::Unit => quote!(f.write(#ident_s)),
             };
 
             quote!(
                 impl ufmt::uDebug for #ident {
-                    fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+                    fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
                     where
                         W: ufmt::uWrite,
                     {
-                        w.debug_struct(#ident_s)?#(.#fields)*.finish()?;
-                        Ok(())
+                        #body
                     }
                 }
 
@@ -75,7 +88,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
 
                             quote!(
                                 #ident::#variant { #(#pats),* } => {
-                                    w.debug_struct(#variant_s)?#(.#methods)*.finish()?;
+                                    f.debug_struct(#variant_s)?#(.#methods)*.finish()
                                 }
                             )
                         }
@@ -87,14 +100,14 @@ pub fn debug(input: TokenStream) -> TokenStream {
 
                             quote!(
                                 #ident::#variant(#(#pats),*) => {
-                                    w.debug_tuple(#variant_s)?#(.field(#pats)?)*.finish()?;
+                                    f.debug_tuple(#variant_s)?#(.field(#pats)?)*.finish()
                                 }
                             )
                         }
 
                         Fields::Unit => quote!(
                             #ident::#variant => {
-                                w.write(#variant_s)?;
+                                f.write(#variant_s)
                             }
                         ),
                     }
@@ -103,15 +116,13 @@ pub fn debug(input: TokenStream) -> TokenStream {
 
             quote!(
                 impl ufmt::uDebug for #ident {
-                    fn fmt<W>(&self, w: &mut W) -> Result<(), W::Error>
+                    fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
                         where
                         W: ufmt::uWrite,
                     {
                         match self {
                             #(#arms),*
                         }
-
-                        Ok(())
                     }
                 }
             )
@@ -140,43 +151,29 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
     let exprs = pieces
         .iter()
         .map(|piece| match piece {
-            Piece::Str(s) => quote!(
-                #[allow(unreachable_code)]
-                match ufmt::uDisplay::fmt(#s, formatter) {
-                    Err(e) => return Err(e),
-                    Ok(_) => {},
-                }
-            ),
+            Piece::Str(s) => quote!(ufmt::uDisplay::fmt(#s, f)?;),
 
             Piece::Display => {
                 let arg = args.next().expect("FIXME");
-                quote!(
-                    #[allow(unreachable_code)]
-                    match ufmt::uDisplay::fmt(&(#arg), formatter) {
-                        Err(e) => return Err(e),
-                        Ok(_) => {}
-                    }
-                )
+                quote!(ufmt::uDisplay::fmt(&(#arg), f)?;)
             }
 
-            Piece::Debug => {
+            Piece::Debug { pretty } => {
                 let arg = args.next().expect("FIXME");
-                quote!(
-                    #[allow(unreachable_code)]
-                    match ufmt::uDebug::fmt(&(#arg), formatter) {
-                        Err(e) => return Err(e),
-                        Ok(_) => {}
-                    }
-                )
+
+                if *pretty {
+                    quote!(f.pretty(|f| ufmt::uDebug::fmt(&(#arg), f))?;)
+                } else {
+                    quote!(ufmt::uDebug::fmt(&(#arg), f)?;)
+                }
             }
         })
         .collect::<Vec<_>>();
 
-    quote!((|| -> Result<(), _> {
-        let formatter = #formatter;
+    quote!(ufmt::do_(#formatter, |f| {
         #(#exprs)*
         Ok(())
-    })())
+    }))
     .into()
 }
 
@@ -202,7 +199,7 @@ impl Parse for Input {
 
 #[derive(Debug, PartialEq)]
 enum Piece<'a> {
-    Debug,
+    Debug { pretty: bool },
     Display,
     Str(&'a str),
 }
@@ -223,9 +220,27 @@ fn parse(mut literal: &str) -> Vec<Piece> {
             }
 
             (Some(head), Some(tail)) => {
-                const DISPLAY: &str = "}";
                 const DEBUG: &str = ":?}";
-                if tail.starts_with(DISPLAY) {
+                const DEBUG_PRETTY: &str = ":#?}";
+                const DISPLAY: &str = "}";
+
+                if tail.starts_with(DEBUG) {
+                    if !head.is_empty() {
+                        pieces.push(Piece::Str(head));
+                    }
+
+                    pieces.push(Piece::Debug { pretty: false });
+
+                    literal = &tail[DEBUG.len()..];
+                } else if tail.starts_with(DEBUG_PRETTY) {
+                    if !head.is_empty() {
+                        pieces.push(Piece::Str(head));
+                    }
+
+                    pieces.push(Piece::Debug { pretty: true });
+
+                    literal = &tail[DEBUG_PRETTY.len()..];
+                } else if tail.starts_with(DISPLAY) {
                     if !head.is_empty() {
                         pieces.push(Piece::Str(head));
                     }
@@ -233,14 +248,6 @@ fn parse(mut literal: &str) -> Vec<Piece> {
                     pieces.push(Piece::Display);
 
                     literal = &tail[DISPLAY.len()..];
-                } else if tail.starts_with(DEBUG) {
-                    if !head.is_empty() {
-                        pieces.push(Piece::Str(head));
-                    }
-
-                    pieces.push(Piece::Debug);
-
-                    literal = &tail[DEBUG.len()..];
                 }
             }
 
@@ -262,10 +269,9 @@ mod tests {
             vec![Piece::Str("The answer is "), Piece::Display]
         );
 
-        assert_eq!(
-            super::parse("The answer is {:?}"),
-            vec![Piece::Str("The answer is "), Piece::Debug]
-        );
+        assert_eq!(super::parse("{:?}"), vec![Piece::Debug { pretty: false }]);
+
+        assert_eq!(super::parse("{:#?}"), vec![Piece::Debug { pretty: true }]);
 
         // FIXME
         // assert_eq!(

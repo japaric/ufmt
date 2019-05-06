@@ -1,0 +1,9 @@
+[package]
+authors = ["Jorge Aparicio <jorge@japaric.io>"]
+edition = "2018"
+name = "ufmt-write"
+version = "0.1.0"
+
+[features]
+# NOTE do NOT turn `std` into a default feature; this is a no-std first crate
+std = []
