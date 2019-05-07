@@ -5,8 +5,8 @@ authors = ["Jorge Aparicio <jorge@japaric.io>"]
 edition = "2018"
 
 [dependencies]
-ufmt-macros = { path = "macros" }
-ufmt-write = { path = "write" }
+ufmt-macros = { path = "macros", version = "0.1.0-beta.1" }
+ufmt-write = { path = "write", version = "0.1.0-beta.1" }
 
 # NOTE do NOT add an `alloc` feature before the alloc crate is stabilized
 [features]

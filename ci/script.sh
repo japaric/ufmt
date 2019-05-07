@@ -8,6 +8,16 @@ main() {
             *-unknown-linux-*)
                 cargo test --target $T --features std
                 ;;
+
+            thumbv7m-none-eabi)
+                cd nopanic
+
+                cargo build --examples --release
+                size $(find target/thumbv7m-none-eabi/release/examples \
+                            -executable \
+                            -type f \
+                            ! -name '*-*' | sort)
+                ;;
         esac
 
         if [ $T = x86_64-unknown-linux-gnu ]; then

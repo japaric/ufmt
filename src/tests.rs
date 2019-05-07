@@ -150,10 +150,14 @@ fn enum_() {
     cmp!("{:?}", X::A);
     cmp!("{:?}", X::B(0, 1));
     cmp!("{:?}", X::C { x: 0, y: 1 });
+
+    cmp!("{:#?}", X::A);
+    cmp!("{:#?}", X::B(0, 1));
+    cmp!("{:#?}", X::C { x: 0, y: 1 });
 }
 
 #[test]
-fn hex() {
+fn ptr() {
     cmp!("{:?}", 1 as *const u8);
     cmp!("{:?}", 0xf as *const u8);
     cmp!("{:?}", 0xff as *const u8);
