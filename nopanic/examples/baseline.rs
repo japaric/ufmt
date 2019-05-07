@@ -2,11 +2,8 @@
 #![no_main]
 #![no_std]
 
-use core::sync::atomic::{AtomicUsize, Ordering};
-
-use common::W;
-use cortex_m_rt::{entry, exception};
-use ufmt::uwrite;
+use common as _;
+use cortex_m_rt::entry;
 
 #[entry]
 fn main() -> ! {
