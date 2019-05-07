@@ -50,7 +50,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
                     quote!(f.debug_tuple(#ident_s)?#(.#fields)*.finish())
                 }
 
-                Fields::Unit => quote!(f.write(#ident_s)),
+                Fields::Unit => quote!(f.write_str(#ident_s)),
             };
 
             quote!(
@@ -107,7 +107,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
 
                         Fields::Unit => quote!(
                             #ident::#variant => {
-                                f.write(#variant_s)
+                                f.write_str(#variant_s)
                             }
                         ),
                     }

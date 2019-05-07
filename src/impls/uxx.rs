@@ -1,15 +1,14 @@
-use core::str;
+use core::{mem, str};
 
 use crate::{uDebug, uDisplay, uWrite, Formatter};
 
 macro_rules! uxx {
-    ($expr:expr, $f:expr, $N:expr) => {{
-        let mut buf: [u8; $N] = unsafe { core::mem::uninitialized() };
-
-        let mut n = $expr;
-        let mut i = $N - 1;
+    ($n:expr, $buf:expr) => {{
+        let mut n = $n;
+        let mut i = $buf.len() - 1;
         loop {
-            *buf.get_mut(i)
+            *$buf
+                .get_mut(i)
                 .unwrap_or_else(|| unsafe { debug_unreachable!() }) = (n % 10) as u8 + b'0';
             n = n / 10;
 
@@ -20,12 +19,12 @@ macro_rules! uxx {
             }
         }
 
-        unsafe {
-            $f.write(str::from_utf8_unchecked(
-                buf.get(i..).unwrap_or_else(|| debug_unreachable!()),
-            ))
-        }
+        unsafe { str::from_utf8_unchecked($buf.get(i..).unwrap_or_else(|| debug_unreachable!())) }
     }};
+}
+
+fn usize(n: usize, buf: &mut [u8]) -> &str {
+    uxx!(n, buf)
 }
 
 impl uDebug for u8 {
@@ -33,7 +32,9 @@ impl uDebug for u8 {
     where
         W: uWrite,
     {
-        uxx!(*self, f, 3)
+        let mut buf: [u8; 3] = unsafe { mem::uninitialized() };
+
+        f.write_str(usize(usize::from(*self), &mut buf))
     }
 }
 
@@ -52,7 +53,9 @@ impl uDebug for u16 {
     where
         W: uWrite,
     {
-        uxx!(*self, f, 5)
+        let mut buf: [u8; 5] = unsafe { mem::uninitialized() };
+
+        f.write_str(usize(usize::from(*self), &mut buf))
     }
 }
 
@@ -71,7 +74,9 @@ impl uDebug for u32 {
     where
         W: uWrite,
     {
-        uxx!(*self, f, 10)
+        let mut buf: [u8; 10] = unsafe { mem::uninitialized() };
+
+        f.write_str(usize(*self as usize, &mut buf))
     }
 }
 
@@ -86,11 +91,25 @@ impl uDisplay for u32 {
 }
 
 impl uDebug for u64 {
+    #[cfg(target_pointer_width = "32")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite,
     {
-        uxx!(*self, f, 20)
+        let mut buf: [u8; 20] = unsafe { mem::uninitialized() };
+
+        let s = uxx!(*self, buf);
+        f.write_str(s)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        let mut buf: [u8; 20] = unsafe { mem::uninitialized() };
+
+        f.write_str(usize(*self as usize, &mut buf))
     }
 }
 
@@ -109,7 +128,10 @@ impl uDebug for u128 {
     where
         W: uWrite,
     {
-        uxx!(*self, f, 39)
+        let mut buf: [u8; 39] = unsafe { mem::uninitialized() };
+
+        let s = uxx!(*self, buf);
+        f.write_str(s)
     }
 }
 
@@ -120,5 +142,45 @@ impl uDisplay for u128 {
         W: uWrite,
     {
         <u128 as uDebug>::fmt(self, f)
+    }
+}
+
+impl uDebug for usize {
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u32 as uDebug>::fmt(&(*self as u32), f)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u64 as uDebug>::fmt(&(*self as u64), f)
+    }
+}
+
+impl uDisplay for usize {
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u32 as uDisplay>::fmt(&(*self as u32), f)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u64 as uDisplay>::fmt(&(*self as u64), f)
     }
 }
