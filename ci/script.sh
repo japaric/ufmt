@@ -1,11 +1,18 @@
 set -euxo pipefail
 
 main() {
-    cargo check --target $TARGET
+    cargo check --target $T
 
-    if [ $TRAVIS_RUST_VERSION = nightly ] && [ $TARGET = x86_64-unknown-linux-gnu ]; then
-        cargo test --features std
-        ( cd macros && cargo test )
+    if [ $TRAVIS_RUST_VERSION = nightly ]; then
+        case $T in
+            *-unknown-linux-*)
+                cargo test --target $T --features std
+                ;;
+        esac
+
+        if [ $T = x86_64-unknown-linux-gnu ]; then
+            ( cd macros && cargo test )
+        fi
     fi
 }
 
@@ -32,8 +39,8 @@ if [ -z ${TRAVIS_RUST_VERSION-} ]; then
     esac
 fi
 
-if [ -z ${TARGET-} ]; then
-    TARGET=$(rustc -Vv | grep host | cut -d ' ' -f2)
+if [ -z ${T-} ]; then
+    T=$(rustc -Vv | grep host | cut -d ' ' -f2)
 fi
 
 if [ $TRAVIS_BRANCH != master ] || [ $TRAVIS_PULL_REQUEST != false ]; then
