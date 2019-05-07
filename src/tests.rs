@@ -27,16 +27,36 @@ fn uxx() {
     cmp!("{}", 0u8);
     cmp!("{}", 10u8);
     cmp!("{}", 100u8);
-    cmp!("{}", 255u8);
+
+    // extreme values
+    cmp!("{}", u8::max_value());
+    cmp!("{}", u16::max_value());
+    cmp!("{}", u32::max_value());
+    cmp!("{}", u64::max_value());
+    cmp!("{}", u128::max_value());
+    cmp!("{}", usize::max_value());
 }
 
 #[test]
 fn ixx() {
+    // sanity check
     cmp!("{}", 0i8);
     cmp!("{}", 10i8);
     cmp!("{}", 100i8);
-    cmp!("{}", 127i8);
-    cmp!("{}", -128i8);
+
+    // extreme values
+    cmp!("{}", i8::min_value());
+    cmp!("{}", i8::max_value());
+    cmp!("{}", i16::min_value());
+    cmp!("{}", i16::max_value());
+    cmp!("{}", i32::min_value());
+    cmp!("{}", i32::max_value());
+    cmp!("{}", i64::min_value());
+    cmp!("{}", i64::max_value());
+    cmp!("{}", i128::min_value());
+    cmp!("{}", i128::max_value());
+    cmp!("{}", isize::min_value());
+    cmp!("{}", isize::max_value());
 }
 
 #[test]
