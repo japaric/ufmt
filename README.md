@@ -1,6 +1,6 @@
-# `ufmt`
+# `μfmt`
 
-> smaller and faster `core::fmt`
+> a smaller and faster `core::fmt`
 
 **IMPORTANT** This is work in progress; some stuff, specially the macros, may
 panic, or worst go into infinite loops, at compile time under some inputs.
