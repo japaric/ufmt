@@ -1,7 +1,7 @@
 set -euxo pipefail
 
 main() {
-    rustup target add $TARGET
+    rustup target add $T
 }
 
 main
