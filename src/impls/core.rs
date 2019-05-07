@@ -1,5 +1,51 @@
 use crate::{uDebug, uDisplay, uWrite, Formatter};
 
+impl uDebug for bool {
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        if *self {
+            f.write_str("true")
+        } else {
+            f.write_str("false")
+        }
+    }
+}
+
+impl uDisplay for bool {
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <bool as uDebug>::fmt(self, f)
+    }
+}
+
+impl uDebug for char {
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        f.write_str("'")?;
+        for c in self.escape_debug() {
+            f.write_char(c)?
+        }
+        f.write_str("'")
+    }
+}
+
+impl uDisplay for char {
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        f.write_char(*self)
+    }
+}
+
 impl<T> uDebug for [T]
 where
     T: uDebug,

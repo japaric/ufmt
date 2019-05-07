@@ -122,3 +122,43 @@ impl uDisplay for u128 {
         <u128 as uDebug>::fmt(self, f)
     }
 }
+
+impl uDebug for usize {
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u32 as uDebug>::fmt(&(*self as u32), f)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u64 as uDebug>::fmt(&(*self as u64), f)
+    }
+}
+
+impl uDisplay for usize {
+    #[cfg(target_pointer_width = "32")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u32 as uDisplay>::fmt(&(*self as u32), f)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline(always)]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <u64 as uDisplay>::fmt(&(*self as u64), f)
+    }
+}
