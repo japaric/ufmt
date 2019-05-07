@@ -116,7 +116,7 @@
 //! impl uWrite for W {
 //!     type Error = Infallible;
 //!
-//!     fn write(&mut self, s: &str) -> Result<(), Infallible> {
+//!     fn write_str(&mut self, s: &str) -> Result<(), Infallible> {
 //!         s.as_bytes()
 //!             .iter()
 //!             .for_each(|b| unsafe { drop(ptr::read_volatile(b)) });
@@ -222,7 +222,7 @@ where
     /// Write whitespace according to the current `self.indentation`
     fn indent(&mut self) -> Result<(), W::Error> {
         for _ in 0..self.indentation {
-            self.write("    ")?;
+            self.write_str("    ")?;
         }
 
         Ok(())
@@ -241,9 +241,14 @@ where
         Ok(())
     }
 
-    /// Writes some data to the underlying buffer contained within this formatter.
-    pub fn write(&mut self, s: &str) -> Result<(), W::Error> {
-        self.writer.write(s)
+    /// Writes a character to the underlying buffer contained within this formatter.
+    pub fn write_char(&mut self, c: char) -> Result<(), W::Error> {
+        self.writer.write_char(c)
+    }
+
+    /// Writes a string slice to the underlying buffer contained within this formatter.
+    pub fn write_str(&mut self, s: &str) -> Result<(), W::Error> {
+        self.writer.write_str(s)
     }
 }
 

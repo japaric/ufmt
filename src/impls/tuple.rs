@@ -22,7 +22,7 @@ impl uDebug for () {
     where
         W: uWrite,
     {
-        f.write("()")
+        f.write_str("()")
     }
 }
 

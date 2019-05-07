@@ -36,7 +36,7 @@ macro_rules! ixx {
         }
 
         unsafe {
-            $f.write(str::from_utf8_unchecked(
+            $f.write_str(str::from_utf8_unchecked(
                 buf.get(i..).unwrap_or_else(|| debug_unreachable!()),
             ))
         }

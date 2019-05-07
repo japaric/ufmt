@@ -7,7 +7,7 @@ where
     /// Creates a `DebugList` builder designed to assist with creation of `fmt::Debug`
     /// implementations for list-like structures.
     pub fn debug_list(&mut self) -> Result<DebugList<'_, 'w, W>, W::Error> {
-        self.write("[")?;
+        self.write_str("[")?;
 
         if self.pretty {
             self.indentation += 1;
@@ -22,7 +22,7 @@ where
     /// Creates a `DebugMap` builder designed to assist with creation of `fmt::Debug`
     /// implementations for map-like structures.
     pub fn debug_map(&mut self) -> Result<DebugMap<'_, 'w, W>, W::Error> {
-        self.write("{")?;
+        self.write_str("{")?;
 
         if self.pretty {
             self.indentation += 1;
@@ -37,7 +37,7 @@ where
     /// Creates a `DebugSet` builder designed to assist with creation of `fmt::Debug`
     /// implementations for set-like structures.
     pub fn debug_set(&mut self) -> Result<DebugSet<'_, 'w, W>, W::Error> {
-        self.write("{")?;
+        self.write_str("{")?;
 
         if self.pretty {
             self.indentation += 1;
@@ -52,7 +52,7 @@ where
     /// Creates a `DebugStruct` builder designed to assist with creation of `fmt::Debug`
     /// implementations for structs.
     pub fn debug_struct(&mut self, name: &str) -> Result<DebugStruct<'_, 'w, W>, W::Error> {
-        self.write(name)?;
+        self.write_str(name)?;
 
         if self.pretty {
             self.indentation += 1;
@@ -67,7 +67,7 @@ where
     /// Creates a `DebugTuple` builder designed to assist with creation of `fmt::Debug`
     /// implementations for tuple structs.
     pub fn debug_tuple(&mut self, name: &str) -> Result<DebugTuple<'_, 'w, W>, W::Error> {
-        self.write(name)?;
+        self.write_str(name)?;
 
         if self.pretty {
             self.indentation += 1;
@@ -104,10 +104,10 @@ where
             self.first = false;
 
             if self.formatter.pretty {
-                self.formatter.write("\n")?;
+                self.formatter.write_str("\n")?;
             }
         } else if !self.formatter.pretty {
-            self.formatter.write(", ")?;
+            self.formatter.write_str(", ")?;
         }
 
         if self.formatter.pretty {
@@ -117,7 +117,7 @@ where
         entry.fmt(self.formatter)?;
 
         if self.formatter.pretty {
-            self.formatter.write(",\n")?;
+            self.formatter.write_str(",\n")?;
         }
 
         Ok(self)
@@ -142,7 +142,7 @@ where
             self.formatter.indent()?;
         }
 
-        self.formatter.write("]")
+        self.formatter.write_str("]")
     }
 }
 
@@ -168,10 +168,10 @@ where
             self.first = false;
 
             if self.formatter.pretty {
-                self.formatter.write("\n")?;
+                self.formatter.write_str("\n")?;
             }
         } else if !self.formatter.pretty {
-            self.formatter.write(", ")?;
+            self.formatter.write_str(", ")?;
         }
 
         if self.formatter.pretty {
@@ -179,11 +179,11 @@ where
         }
 
         key.fmt(self.formatter)?;
-        self.formatter.write(": ")?;
+        self.formatter.write_str(": ")?;
         value.fmt(self.formatter)?;
 
         if self.formatter.pretty {
-            self.formatter.write(",\n")?;
+            self.formatter.write_str(",\n")?;
         }
 
         Ok(self)
@@ -203,7 +203,7 @@ where
 
     /// Finishes output and returns any error encountered.
     pub fn finish(&mut self) -> Result<(), W::Error> {
-        self.formatter.write("}")
+        self.formatter.write_str("}")
     }
 }
 
@@ -226,10 +226,10 @@ where
             self.first = false;
 
             if self.formatter.pretty {
-                self.formatter.write("\n")?;
+                self.formatter.write_str("\n")?;
             }
         } else if !self.formatter.pretty {
-            self.formatter.write(", ")?;
+            self.formatter.write_str(", ")?;
         }
 
         if self.formatter.pretty {
@@ -239,7 +239,7 @@ where
         entry.fmt(self.formatter)?;
 
         if self.formatter.pretty {
-            self.formatter.write(",\n")?;
+            self.formatter.write_str(",\n")?;
         }
 
         Ok(self)
@@ -259,7 +259,7 @@ where
 
     /// Finishes output and returns any error encountered.
     pub fn finish(&mut self) -> Result<(), W::Error> {
-        self.formatter.write("}")
+        self.formatter.write_str("}")
     }
 }
 
@@ -281,27 +281,27 @@ where
         if self.first {
             self.first = false;
 
-            self.formatter.write(" {")?;
+            self.formatter.write_str(" {")?;
 
             if self.formatter.pretty {
-                self.formatter.write("\n")?;
+                self.formatter.write_str("\n")?;
             } else {
-                self.formatter.write(" ")?;
+                self.formatter.write_str(" ")?;
             }
         } else if !self.formatter.pretty {
-            self.formatter.write(", ")?;
+            self.formatter.write_str(", ")?;
         }
 
         if self.formatter.pretty {
             self.formatter.indent()?;
         }
 
-        self.formatter.write(name)?;
-        self.formatter.write(": ")?;
+        self.formatter.write_str(name)?;
+        self.formatter.write_str(": ")?;
         value.fmt(self.formatter)?;
 
         if self.formatter.pretty {
-            self.formatter.write(",\n")?;
+            self.formatter.write_str(",\n")?;
         }
 
         Ok(self)
@@ -317,10 +317,10 @@ where
             if self.formatter.pretty {
                 self.formatter.indent()?;
             } else {
-                self.formatter.write(" ")?;
+                self.formatter.write_str(" ")?;
             }
 
-            self.formatter.write("}")?;
+            self.formatter.write_str("}")?;
         }
 
         Ok(())
@@ -349,13 +349,13 @@ where
         if self.first {
             self.first = false;
 
-            self.formatter.write("(")?;
+            self.formatter.write_str("(")?;
 
             if self.formatter.pretty {
-                self.formatter.write("\n")?;
+                self.formatter.write_str("\n")?;
             }
         } else if !self.formatter.pretty {
-            self.formatter.write(", ")?;
+            self.formatter.write_str(", ")?;
         }
 
         if self.formatter.pretty {
@@ -365,7 +365,7 @@ where
         value.fmt(self.formatter)?;
 
         if self.formatter.pretty {
-            self.formatter.write(",\n")?;
+            self.formatter.write_str(",\n")?;
         }
 
         Ok(self)
@@ -382,10 +382,10 @@ where
                 self.formatter.indent()?;
             } else if self.unnamed && self.fields == 1 {
                 // this is a one-element tuple so we need a trailing comma
-                self.formatter.write(",")?;
+                self.formatter.write_str(",")?;
             }
 
-            self.formatter.write(")")?;
+            self.formatter.write_str(")")?;
         }
 
         Ok(())
