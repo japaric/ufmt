@@ -12,6 +12,7 @@ use syn::{
     parse::{self, Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
+    spanned::Spanned,
     Data, DeriveInput, Expr, Fields, Ident, IntSuffix, LitInt, LitStr, Token,
 };
 
@@ -154,18 +155,41 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
     };
     let mut args = input.args.iter();
 
+    let required_args = pieces.iter().filter(|piece| !piece.is_str()).count();
+    let supplied_args = args.len();
+    if supplied_args < required_args {
+        return parse::Error::new(
+            literal.span(),
+            &format!(
+                "format string requires {} arguments but {} {} supplied",
+                required_args,
+                supplied_args,
+                if supplied_args == 1 { "was" } else { "were" }
+            ),
+        )
+        .to_compile_error()
+        .into();
+    } else if supplied_args > required_args {
+        return parse::Error::new(
+            args.nth(required_args).expect("UNREACHABLE").span(),
+            &format!("argument never used"),
+        )
+        .to_compile_error()
+        .into();
+    }
+
     let exprs = pieces
         .iter()
         .map(|piece| match piece {
             Piece::Str(s) => quote!(ufmt::uDisplay::fmt(#s, f)?;),
 
             Piece::Display => {
-                let arg = args.next().expect("FIXME");
+                let arg = args.next().expect("UNREACHABLE");
                 quote!(ufmt::uDisplay::fmt(&(#arg), f)?;)
             }
 
             Piece::Debug { pretty } => {
-                let arg = args.next().expect("FIXME");
+                let arg = args.next().expect("UNREACHABLE");
 
                 if *pretty {
                     quote!(f.pretty(|f| ufmt::uDebug::fmt(&(#arg), f))?;)
@@ -208,6 +232,15 @@ enum Piece<'a> {
     Debug { pretty: bool },
     Display,
     Str(Cow<'a, str>),
+}
+
+impl Piece<'_> {
+    fn is_str(&self) -> bool {
+        match self {
+            Piece::Str(_) => true,
+            _ => false,
+        }
+    }
 }
 
 // `}}` -> `}`
