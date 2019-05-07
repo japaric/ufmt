@@ -1,4 +1,4 @@
-//! `μfmt`, a smaller and faster `core::fmt`
+//! `μfmt`, a smaller and faster alternative to `core::fmt`
 //!
 //! **IMPORTANT** This is work in progress; some stuff, specially the macros, may panic, or worst go
 //! into infinite loops, at compile time under some inputs.
@@ -18,7 +18,7 @@
 //! - `core::write!`-like macro for string interpolation
 //! - A generic `Formatter<'_, impl uWrite>` instead of a single `core::Formatter`; the `uWrite`
 //!   trait has an associated error type so each writer can choose its error type. For example,
-//!   `alloc::String` can use [`Infallible`] as the error type.
+//!   the implementation for `std::String` uses [`Infallible`] as its error type.
 //! - `core::Formatter::debug_struct`-like API
 //! - `#[derive(uDebug)]`
 //! - Pretty formatting (`{:#?}`) for `uDebug`

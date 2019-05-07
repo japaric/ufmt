@@ -52,14 +52,15 @@ where
     }
 }
 
-impl uDebug for String {
-    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
-    where
-        W: uWrite,
-    {
-        <str as uDebug>::fmt(self, f)
-    }
-}
+// TODO
+// impl uDebug for String {
+//     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+//     where
+//         W: uWrite,
+//     {
+//         <str as uDebug>::fmt(self, f)
+//     }
+// }
 
 impl uDisplay for String {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
