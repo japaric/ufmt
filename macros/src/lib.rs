@@ -211,19 +211,33 @@ struct Input {
     formatter: Expr,
     _comma: Token![,],
     literal: LitStr,
-    _comma2: Token![,],
+    _comma2: Option<Token![,]>,
     args: Punctuated<Expr, Token![,]>,
 }
 
 impl Parse for Input {
     fn parse(input: ParseStream) -> parse::Result<Self> {
-        Ok(Input {
-            formatter: input.parse()?,
-            _comma: input.parse()?,
-            literal: input.parse()?,
-            _comma2: input.parse()?,
-            args: Punctuated::parse_terminated(input)?,
-        })
+        let formatter = input.parse()?;
+        let _comma = input.parse()?;
+        let literal = input.parse()?;
+
+        if input.is_empty() {
+            Ok(Input {
+                formatter,
+                _comma,
+                literal,
+                _comma2: None,
+                args: Punctuated::new(),
+            })
+        } else {
+            Ok(Input {
+                formatter,
+                _comma,
+                literal,
+                _comma2: input.parse()?,
+                args: Punctuated::parse_terminated(input)?,
+            })
+        }
     }
 }
 
