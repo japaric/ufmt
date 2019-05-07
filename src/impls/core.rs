@@ -96,7 +96,7 @@ impl uDisplay for str {
 
 impl<T> uDebug for &'_ T
 where
-    T: uDebug,
+    T: uDebug + ?Sized,
 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
@@ -109,7 +109,7 @@ where
 
 impl<T> uDisplay for &'_ T
 where
-    T: uDisplay,
+    T: uDisplay + ?Sized,
 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
@@ -122,7 +122,7 @@ where
 
 impl<T> uDebug for &'_ mut T
 where
-    T: uDebug,
+    T: uDebug + ?Sized,
 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
@@ -135,7 +135,7 @@ where
 
 impl<T> uDisplay for &'_ mut T
 where
-    T: uDisplay,
+    T: uDisplay + ?Sized,
 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
