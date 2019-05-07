@@ -2,8 +2,9 @@
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 edition = "2018"
 name = "ufmt-write"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 
+# NOTE do NOT add an `alloc` feature before the alloc crate is stabilized
 [features]
 # NOTE do NOT turn `std` into a default feature; this is a no-std first crate
 std = []

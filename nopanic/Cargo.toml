@@ -2,7 +2,8 @@
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 edition = "2018"
 name = "common"
-version = "0.1.0"
+publish = false
+version = "0.0.0"
 
 [dependencies]
 cortex-m = "0.5.10"
