@@ -18,7 +18,7 @@ macro_rules! ixx {
         loop {
             *$buf
                 .get_mut(i)
-                .unwrap_or_else(|| unsafe { debug_unreachable!() }) = (n % 10) as u8 + b'0';
+                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = (n % 10) as u8 + b'0';
             n = n / 10;
 
             if n == 0 {
@@ -32,10 +32,10 @@ macro_rules! ixx {
             i -= 1;
             *$buf
                 .get_mut(i)
-                .unwrap_or_else(|| unsafe { debug_unreachable!() }) = b'-';
+                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = b'-';
         }
 
-        unsafe { str::from_utf8_unchecked($buf.get(i..).unwrap_or_else(|| debug_unreachable!())) }
+        unsafe { str::from_utf8_unchecked($buf.get(i..).unwrap_or_else(|| assume_unreachable!())) }
     }};
 }
 

@@ -160,7 +160,7 @@ pub use ufmt_write::uWrite;
 
 pub use crate::helpers::{DebugList, DebugMap, DebugStruct, DebugTuple};
 
-macro_rules! debug_unreachable {
+macro_rules! assume_unreachable {
     () => {
         if cfg!(debug_assertions) {
             unreachable!()

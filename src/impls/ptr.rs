@@ -10,7 +10,7 @@ macro_rules! hex {
 
         unsafe {
             $f.write_str(str::from_utf8_unchecked(
-                buf.get(i..).unwrap_or_else(|| debug_unreachable!()),
+                buf.get(i..).unwrap_or_else(|| assume_unreachable!()),
             ))
         }
     }};
@@ -22,7 +22,7 @@ fn hex(mut n: usize, buf: &mut [u8]) -> usize {
     loop {
         let d = (n % 16) as u8;
         *buf.get_mut(i)
-            .unwrap_or_else(|| unsafe { debug_unreachable!() }) =
+            .unwrap_or_else(|| unsafe { assume_unreachable!() }) =
             if d < 10 { d + b'0' } else { (d - 10) + b'a' };
         n = n / 16;
 
@@ -33,11 +33,11 @@ fn hex(mut n: usize, buf: &mut [u8]) -> usize {
     }
 
     *buf.get_mut(i)
-        .unwrap_or_else(|| unsafe { debug_unreachable!() }) = b'x';
+        .unwrap_or_else(|| unsafe { assume_unreachable!() }) = b'x';
     i -= 1;
 
     *buf.get_mut(i)
-        .unwrap_or_else(|| unsafe { debug_unreachable!() }) = b'0';
+        .unwrap_or_else(|| unsafe { assume_unreachable!() }) = b'0';
 
     i
 }

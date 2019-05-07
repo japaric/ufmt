@@ -75,7 +75,7 @@ where
 //             if esc.len() != 1 {
 //                 f.write_str(
 //                     self.get(from..i)
-//                         .unwrap_or_else(|| unsafe { debug_unreachable!() }),
+//                         .unwrap_or_else(|| unsafe { assume_unreachable!() }),
 //                 )?;
 //                 for c in esc {
 //                     f.write_char(c)?;
@@ -86,7 +86,7 @@ where
 
 //         f.write_str(
 //             self.get(from..)
-//                 .unwrap_or_else(|| unsafe { debug_unreachable!() }),
+//                 .unwrap_or_else(|| unsafe { assume_unreachable!() }),
 //         )?;
 //         f.write_str("\"")
 //     }
