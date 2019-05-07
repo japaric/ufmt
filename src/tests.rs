@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{derive::uDebug, uwrite};
+use crate::{derive::uDebug, uwrite, uwriteln};
 
 macro_rules! uformat {
     ($($expr:expr),*) => {{
@@ -202,4 +202,12 @@ fn slice() {
     cmp!("{:#?}", [0; 0]);
     cmp!("{:#?}", [0]);
     cmp!("{:#?}", [0, 1]);
+}
+
+#[test]
+fn uwriteln() {
+    let mut s = String::new();
+    uwriteln!(&mut s, "Hello").unwrap();
+    uwriteln!(&mut s, "World",).unwrap();
+    assert_eq!(s, "Hello\nWorld\n");
 }

@@ -16,6 +16,14 @@ use syn::{
     Data, DeriveInput, Expr, Fields, Ident, IntSuffix, LitInt, LitStr, Token,
 };
 
+/// Automatically derive the `uDebug` trait for a `struct` or `enum`
+///
+/// Supported items
+///
+/// - all kind of `struct`-s
+/// - all kind of `enum`-s
+///
+/// `union`-s are not supported
 #[proc_macro_derive(uDebug)]
 pub fn debug(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -141,15 +149,48 @@ pub fn debug(input: TokenStream) -> TokenStream {
     ts.into()
 }
 
+/// Write formatted data into a buffer
+///
+/// This macro accepts a format string, a list of arguments, and a 'writer'. Arguments will be
+/// formatted according to the specified format string and the result will be passed to the writer.
+/// The writer must have type `&mut impl uWrite` or `&mut ufmt::Formatter<'_, impl uWrite>`. The
+/// macro returns the associated `Error` type of the `uWrite`-r.
+///
+/// The syntax is similar to [`core::write!`] but only a handful of argument types are accepted:
+///
+/// [`core::write!`]: https://doc.rust-lang.org/core/macro.write.html
+///
+/// - `{}` - `uDisplay`
+/// - `{:?}` - `uDebug`
+/// - `{:#?}` - "pretty" `uDebug`
+///
+/// Named parameters and "specified" positional parameters (`{0}`) are not supported.
+///
+/// `{{` and `}}` can be used to escape braces.
 #[proc_macro]
 pub fn uwrite(input: TokenStream) -> TokenStream {
+    write(input, false)
+}
+
+/// Write formatted data into a buffer, with a newline appended
+///
+/// See [`uwrite!`](macro.uwrite.html) for more details
+#[proc_macro]
+pub fn uwriteln(input: TokenStream) -> TokenStream {
+    write(input, true)
+}
+
+fn write(input: TokenStream, newline: bool) -> TokenStream {
     let input = parse_macro_input!(input as Input);
 
     let formatter = &input.formatter;
     let literal = input.literal;
 
-    let s = literal.value();
-    let pieces = match parse(&s, literal.span()) {
+    let mut format = literal.value();
+    if newline {
+        format.push('\n');
+    }
+    let pieces = match parse(&format, literal.span()) {
         Err(e) => return e.to_compile_error().into(),
         Ok(pieces) => pieces,
     };

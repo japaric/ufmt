@@ -1,8 +1,5 @@
 //! `μfmt`, a smaller and faster alternative to `core::fmt`
 //!
-//! **IMPORTANT** This is work in progress; some stuff, specially the macros, may panic, or worst go
-//! into infinite loops, at compile time under some inputs.
-//!
 //! # Design goals
 //!
 //! Prioritized in that order
@@ -14,16 +11,23 @@
 //!
 //! # Features
 //!
-//! - `Debug` and `Display`-like traits
-//! - `core::write!`-like macro for string interpolation
-//! - A generic `Formatter<'_, impl uWrite>` instead of a single `core::Formatter`; the `uWrite`
-//!   trait has an associated error type so each writer can choose its error type. For example,
-//!   the implementation for `std::String` uses [`Infallible`] as its error type.
-//! - `core::Formatter::debug_struct`-like API
-//! - `#[derive(uDebug)]`
+//! - [`Debug`] and [`Display`]-like traits
+//! - [`core::write!`][uwrite]-like macro for string interpolation
+//! - A generic [`Formatter<'_, impl uWrite>`][formatter] instead of a single `core::Formatter`; the
+//!   [`uWrite`] trait has an associated error type so each writer can choose its error type. For
+//!   example, the implementation for `std::String` uses [`Infallible`] as its error type.
+//! - [`core::Formatter::debug_struct`][debug_struct]-like API
+//! - [`#[derive(uDebug)]`][derive]
 //! - Pretty formatting (`{:#?}`) for `uDebug`
 //!
+//! [`Debug`]: trait.uDebug.html
+//! [`Display`]: trait.uDisplay.html
+//! [uwrite]: index.html#reexports
+//! [formatter]: struct.Formatter.html
+//! [`uWrite`]: trait.uWrite.html
 //! [`Infallible`]: https://doc.rust-lang.org/core/convert/enum.Infallible.html
+//! [debug_struct]: file:///home/japaric/rust/ufmt/target/doc/ufmt/struct.Formatter.html#method.debug_list
+//! [derive]: derive/index.html
 //!
 //! # Non-features
 //!
@@ -33,6 +37,8 @@
 //! - Formatting floating point numbers
 //!
 //! # Examples
+//!
+//! - on nightly: `uwrite!` / `uwriteln!`
 //!
 //! ```
 //! #![feature(proc_macro_hygiene)]
@@ -48,6 +54,51 @@
 //! assert_eq!(s, "Pair { x: 1, y: 2 }");
 //! ```
 //!
+//! - on stable: `Formatter`
+//!
+//! The `uwrite!` macro requires nightly. On stable you can directly use the `Formatter` API.
+//!
+//! ```
+//! use ufmt::{derive::uDebug, uDebug, Formatter, uwrite};
+//!
+//! #[derive(uDebug)]
+//! struct Pair { x: u32, y: u32 }
+//!
+//! let mut s = String::new();
+//! let pair = Pair { x: 1, y: 2 };
+//!
+//! // equivalent to `uwrite!("{:#?}", pair).unwrap()`
+//! {
+//!     let mut f = Formatter::new(&mut s);
+//!
+//!     f.pretty(|f| uDebug::fmt(&pair, f))
+//! }.unwrap();
+//!
+//! assert_eq!(s, "Pair {\n    x: 1,\n    y: 2,\n}");
+//! ```
+//!
+//! - on stable: implementing `uWrite`
+//!
+//! When implementing the `uWrite` trait you should prefer the `ufmt_write::uWrite` crate over the
+//! `ufmt::uWrite` crate for better forward compatibility.
+//!
+//! ```
+//! use core::convert::Infallible;
+//!
+//! use ufmt_write::uWrite;
+//!
+//! struct MyWriter;
+//!
+//! impl uWrite for MyWriter {
+//!     type Error = Infallible;
+//!
+//!     fn write_str(&mut self, s: &str) -> Result<(), Self::Error> {
+//!         // ..
+//!         Ok(())
+//!     }
+//! }
+//! ```
+//!
 //! # Benchmarks
 //!
 //! The benchmarks ran on a ARM Cortex-M3 chip (`thumbv7m-none-eabi`).
@@ -56,7 +107,7 @@
 //! `codegen-units = 1`.
 //!
 //! In all benchmarks `x = i32::MIN` and `y = i32::MIN` plus some obfuscation was applied to
-//! prevent const-propagation.
+//! prevent const-propagation of the `*write!` arguments.
 //!
 //! The unit of time is one core clock cycle: 125 ns (8 MHz)
 //!
@@ -138,7 +189,7 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! Rust 1.34.0 for everything but the `uwrite!` macro which requires the unstable
+//! Rust 1.34 for everything but the `uwrite!` macro which requires the unstable
 //! `proc_macro_hygiene` feature at call site and thus nightly.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -155,49 +206,46 @@ extern crate self as ufmt;
 
 use core::str;
 
-pub use ufmt_macros::uwrite;
+pub use ufmt_macros::{uwrite, uwriteln};
 pub use ufmt_write::uWrite;
 
 pub use crate::helpers::{DebugList, DebugMap, DebugStruct, DebugTuple};
 
-macro_rules! assume_unreachable {
-    () => {
-        if cfg!(debug_assertions) {
-            unreachable!()
-        } else {
-            core::hint::unreachable_unchecked()
-        }
-    };
-}
+#[macro_use]
+mod macros;
 
 mod helpers;
 mod impls;
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests;
 /// Derive macros
 pub mod derive {
     pub use ufmt_macros::uDebug;
 }
 
-/// `?` formatting
+#[cfg(all(test, not(feature = "std")))]
+compile_error!("run `cargo test --features std` instead of `cargo test`");
+
+/// Just like `core::fmt::Debug`
 #[allow(non_camel_case_types)]
 pub trait uDebug {
-    /// Formats the value using the given `Write`-r.
+    /// Formats the value using the given formatter
     fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite;
 }
 
-/// Format trait for an empty format, `{}`
+/// Just like `core::fmt::Display`
 #[allow(non_camel_case_types)]
 pub trait uDisplay {
-    /// Formats the value using the given `Write`-r.
+    /// Formats the value using the given formatter
     fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite;
 }
 
 /// Configuration for formatting
+#[allow(non_camel_case_types)]
 pub struct Formatter<'w, W>
 where
     W: uWrite,
@@ -211,25 +259,16 @@ impl<'w, W> Formatter<'w, W>
 where
     W: uWrite,
 {
-    fn new(writer: &'w mut W) -> Self {
-        Formatter {
+    /// Creates a formatter from the given writer
+    pub fn new(writer: &'w mut W) -> Self {
+        Self {
             indentation: 0,
             pretty: false,
             writer,
         }
     }
 
-    /// Write whitespace according to the current `self.indentation`
-    fn indent(&mut self) -> Result<(), W::Error> {
-        for _ in 0..self.indentation {
-            self.write_str("    ")?;
-        }
-
-        Ok(())
-    }
-
-    // IMPLEMENTATION DETAIL
-    #[doc(hidden)]
+    /// Execute the closure with pretty-printing enabled
     pub fn pretty(
         &mut self,
         f: impl FnOnce(&mut Self) -> Result<(), W::Error>,
@@ -249,6 +288,15 @@ where
     /// Writes a string slice to the underlying buffer contained within this formatter.
     pub fn write_str(&mut self, s: &str) -> Result<(), W::Error> {
         self.writer.write_str(s)
+    }
+
+    /// Write whitespace according to the current `self.indentation`
+    fn indent(&mut self) -> Result<(), W::Error> {
+        for _ in 0..self.indentation {
+            self.write_str("    ")?;
+        }
+
+        Ok(())
     }
 }
 
