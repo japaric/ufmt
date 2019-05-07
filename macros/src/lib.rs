@@ -2,10 +2,12 @@
 
 extern crate proc_macro;
 
+use core::mem;
 use proc_macro::TokenStream;
-use quote::quote;
+use std::borrow::Cow;
 
 use proc_macro2::Span;
+use quote::quote;
 use syn::{
     parse::{self, Parse, ParseStream},
     parse_macro_input,
@@ -143,9 +145,13 @@ pub fn uwrite(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as Input);
 
     let formatter = &input.formatter;
-    let literal = input.literal.value();
+    let literal = input.literal;
 
-    let pieces = parse(&literal);
+    let s = literal.value();
+    let pieces = match parse(&s, literal.span()) {
+        Err(e) => return e.to_compile_error().into(),
+        Ok(pieces) => pieces,
+    };
     let mut args = input.args.iter();
 
     let exprs = pieces
@@ -201,82 +207,187 @@ impl Parse for Input {
 enum Piece<'a> {
     Debug { pretty: bool },
     Display,
-    Str(&'a str),
+    Str(Cow<'a, str>),
 }
 
-fn parse(mut literal: &str) -> Vec<Piece> {
+// `}}` -> `}`
+fn unescape<'l>(mut literal: &'l str, span: Span) -> parse::Result<Cow<'l, str>> {
+    if literal.contains('}') {
+        let mut buf = String::new();
+
+        while literal.contains('}') {
+            const ERR: &str = "format string contains an unmatched right brace";
+            let mut parts = literal.splitn(2, '}');
+
+            match (parts.next(), parts.next()) {
+                (Some(left), Some(right)) => {
+                    const ESCAPED_BRACE: &str = "}";
+
+                    if right.starts_with(ESCAPED_BRACE) {
+                        buf.push_str(left);
+                        buf.push('}');
+
+                        literal = &right[ESCAPED_BRACE.len()..];
+                    } else {
+                        return Err(parse::Error::new(span, ERR));
+                    }
+                }
+
+                _ => unreachable!(),
+            }
+        }
+
+        buf.push_str(literal);
+
+        Ok(buf.into())
+    } else {
+        Ok(Cow::Borrowed(literal))
+    }
+}
+
+fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> {
     let mut pieces = vec![];
 
+    let mut buf = String::new();
     loop {
         let mut parts = literal.splitn(2, '{');
         match (parts.next(), parts.next()) {
+            // empty string literal
             (None, None) => break,
 
+            // end of the string literal
             (Some(s), None) => {
-                if !s.is_empty() {
-                    pieces.push(Piece::Str(s));
+                if buf.is_empty() {
+                    if !s.is_empty() {
+                        pieces.push(Piece::Str(unescape(s, span)?));
+                    }
+                } else {
+                    buf.push_str(&unescape(s, span)?);
+
+                    pieces.push(Piece::Str(Cow::Owned(buf)));
                 }
+
                 break;
             }
 
-            (Some(head), Some(tail)) => {
+            (head, Some(tail)) => {
                 const DEBUG: &str = ":?}";
                 const DEBUG_PRETTY: &str = ":#?}";
                 const DISPLAY: &str = "}";
+                const ESCAPED_BRACE: &str = "{";
 
-                if tail.starts_with(DEBUG) {
-                    if !head.is_empty() {
-                        pieces.push(Piece::Str(head));
+                let head = head.unwrap_or("");
+                if tail.starts_with(DEBUG)
+                    || tail.starts_with(DEBUG_PRETTY)
+                    || tail.starts_with(DISPLAY)
+                {
+                    if buf.is_empty() {
+                        if !head.is_empty() {
+                            pieces.push(Piece::Str(unescape(head, span)?));
+                        }
+                    } else {
+                        buf.push_str(&unescape(head, span)?);
+
+                        pieces.push(Piece::Str(Cow::Owned(mem::replace(
+                            &mut buf,
+                            String::new(),
+                        ))));
                     }
 
-                    pieces.push(Piece::Debug { pretty: false });
+                    if tail.starts_with(DEBUG) {
+                        pieces.push(Piece::Debug { pretty: false });
 
-                    literal = &tail[DEBUG.len()..];
-                } else if tail.starts_with(DEBUG_PRETTY) {
-                    if !head.is_empty() {
-                        pieces.push(Piece::Str(head));
+                        literal = &tail[DEBUG.len()..];
+                    } else if tail.starts_with(DEBUG_PRETTY) {
+                        pieces.push(Piece::Debug { pretty: true });
+
+                        literal = &tail[DEBUG_PRETTY.len()..];
+                    } else {
+                        pieces.push(Piece::Display);
+
+                        literal = &tail[DISPLAY.len()..];
                     }
+                } else if tail.starts_with(ESCAPED_BRACE) {
+                    buf.push_str(&unescape(head, span)?);
+                    buf.push('{');
 
-                    pieces.push(Piece::Debug { pretty: true });
-
-                    literal = &tail[DEBUG_PRETTY.len()..];
-                } else if tail.starts_with(DISPLAY) {
-                    if !head.is_empty() {
-                        pieces.push(Piece::Str(head));
-                    }
-
-                    pieces.push(Piece::Display);
-
-                    literal = &tail[DISPLAY.len()..];
+                    literal = &tail[ESCAPED_BRACE.len()..];
+                } else {
+                    return Err(parse::Error::new(
+                        span,
+                        "invalid format string: expected `{{`, `{}`, `{:?}` or `{:#?}`",
+                    ));
                 }
             }
-
-            _ => unreachable!(),
         }
     }
 
-    pieces
+    Ok(pieces)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Piece;
+    use std::borrow::Cow;
+
+    use proc_macro2::Span;
+
+    use crate::Piece;
 
     #[test]
     fn pieces() {
+        let span = Span::call_site();
+
+        // string interpolation
         assert_eq!(
-            super::parse("The answer is {}"),
-            vec![Piece::Str("The answer is "), Piece::Display]
+            super::parse("The answer is {}", span).ok(),
+            Some(vec![
+                Piece::Str(Cow::Borrowed("The answer is ")),
+                Piece::Display
+            ]),
         );
 
-        assert_eq!(super::parse("{:?}"), vec![Piece::Debug { pretty: false }]);
+        assert_eq!(
+            super::parse("{:?}", span).ok(),
+            Some(vec![Piece::Debug { pretty: false }]),
+        );
 
-        assert_eq!(super::parse("{:#?}"), vec![Piece::Debug { pretty: true }]);
+        assert_eq!(
+            super::parse("{:#?}", span).ok(),
+            Some(vec![Piece::Debug { pretty: true }]),
+        );
 
-        // FIXME
-        // assert_eq!(
-        //     super::parse("{{}} is not an argument"),
-        //     vec![Piece::Str("{} is not an argument")]
-        // );
+        // escaped braces
+        assert_eq!(
+            super::parse("{{}} is not an argument", span).ok(),
+            Some(vec![Piece::Str(Cow::Borrowed("{} is not an argument"))]),
+        );
+
+        // left brace & junk
+        assert!(super::parse("{", span).is_err());
+        assert!(super::parse(" {", span).is_err());
+        assert!(super::parse("{ ", span).is_err());
+        assert!(super::parse("{ {", span).is_err());
+        assert!(super::parse("{:x}", span).is_err());
+    }
+
+    #[test]
+    fn unescape() {
+        let span = Span::call_site();
+
+        // no right brace
+        assert_eq!(super::unescape("", span).ok(), Some(Cow::Borrowed("")));
+        assert_eq!(
+            super::unescape("Hello", span).ok(),
+            Some(Cow::Borrowed("Hello"))
+        );
+
+        // unmatched right brace
+        assert!(super::unescape(" }", span).is_err());
+        assert!(super::unescape("} ", span).is_err());
+        assert!(super::unescape("}", span).is_err());
+
+        // escaped right brace
+        assert_eq!(super::unescape("}}", span).ok(), Some(Cow::Borrowed("}")));
+        assert_eq!(super::unescape("}} ", span).ok(), Some(Cow::Borrowed("} ")));
     }
 }
