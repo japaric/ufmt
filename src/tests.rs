@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{derive::uDebug, uwrite};
+use crate::{derive::uDebug, uwrite, uwriteln};
 
 macro_rules! uformat {
     ($($expr:expr),*) => {{
@@ -20,6 +20,44 @@ macro_rules! cmp {
             Ok(format!($s $(,$args)*)),
         )
     }
+}
+
+#[test]
+fn core() {
+    cmp!("{:?}", None::<i32>);
+    cmp!("{:#?}", None::<i32>);
+
+    cmp!("{:?}", Some(0));
+    cmp!("{:#?}", Some(0));
+
+    cmp!("{:?}", Ok::<_, ()>(1));
+    cmp!("{:#?}", Ok::<_, ()>(1));
+
+    cmp!("{:?}", Err::<(), _>(2));
+    cmp!("{:#?}", Err::<(), _>(2));
+}
+
+#[test]
+fn recursion() {
+    #[derive(uDebug, Debug)]
+    struct Node {
+        value: i32,
+        next: Option<Box<Node>>,
+    }
+
+    fn x() -> Node {
+        let tail = Node {
+            value: 0,
+            next: None,
+        };
+        Node {
+            value: 1,
+            next: Some(Box::new(tail)),
+        }
+    }
+
+    cmp!("{:?}", x());
+    cmp!("{:#?}", x());
 }
 
 #[test]
@@ -202,4 +240,12 @@ fn slice() {
     cmp!("{:#?}", [0; 0]);
     cmp!("{:#?}", [0]);
     cmp!("{:#?}", [0, 1]);
+}
+
+#[test]
+fn uwriteln() {
+    let mut s = String::new();
+    uwriteln!(&mut s, "Hello").unwrap();
+    uwriteln!(&mut s, "World",).unwrap();
+    assert_eq!(s, "Hello\nWorld\n");
 }

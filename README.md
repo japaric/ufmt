@@ -1,11 +1,43 @@
 # `μfmt`
 
-> a smaller and faster alternative to `core::fmt`
+> A (6-40x) smaller, (2-9x) faster and panic-free alternative to `core::fmt`
 
-**IMPORTANT** This is work in progress; some stuff, specially the macros, may
-panic, or worst go into infinite loops, at compile time under some inputs.
+![Call graph of formatting structs](cg.png)
 
-## [API docs](https://japaric.github.io/ufmt/ufmt/)
+Call graph of a program that formats some structs (generated using
+[`cargo-call-stack`]). Source code can be found at the bottom of this file. The
+program was compiled with `-C opt-level=z`.
+
+[`cargo-call-stack`]: https://crates.io/crates/cargo-call-stack
+
+## Design goals
+
+From highest priority to lowest priority
+
+- Optimized for binary size and speed (rather than for compilation time)
+
+- No trait objects
+
+- No panicking branches when optimized
+
+- No recursion (if / where possible)
+
+## Features
+
+- `Debug` and `Display`-like traits
+
+- `core::write!`-like macro
+
+- A generic `Formatter<'_, impl uWrite>` instead of a single `core::Formatter`;
+  the `uWrite` trait has an associated error type so each writer can choose its
+  error type. For example, the implementation for `std::String` uses
+  `Infallible` as its error type.
+
+- `core::Formatter::debug_struct`-like API
+
+- `#[derive(uDebug)]`
+
+- Pretty formatting (`{:#?}`) for `uDebug`
 
 ## License
 
@@ -33,3 +65,51 @@ Creative Commons CC-BY-SA v4.0 license ([LICENSE-CC-BY-SA](LICENSE-CC-BY-SA) or
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
+
+## Appendix
+
+### Formatting structs (snippet)
+
+Full source code in [nopanic/examples/struct.rs](nopanic/examples/struct.rs).
+
+``` rust
+// ..
+
+#[derive(Clone, Copy, uDebug)]
+struct Pair {
+    x: i32,
+    y: i32,
+}
+
+static X: AtomicI32 = AtomicI32::new(0);
+static Y: AtomicI32 = AtomicI32::new(0);
+
+#[exception]
+fn PendSV() {
+    let x = X.load(Ordering::Relaxed);
+    let y = Y.load(Ordering::Relaxed);
+
+    uwrite!(&mut W, "{:?}", Braces {}).unwrap();
+    uwrite!(&mut W, "{:#?}", Braces {}).unwrap();
+
+    uwrite!(&mut W, "{:?}", Parens()).unwrap();
+    uwrite!(&mut W, "{:#?}", Parens()).unwrap();
+
+    uwrite!(&mut W, "{:?}", I32(x)).unwrap();
+    uwrite!(&mut W, "{:#?}", I32(x)).unwrap();
+
+    uwrite!(&mut W, "{:?}", Tuple(x, y)).unwrap();
+    uwrite!(&mut W, "{:#?}", Tuple(x, y)).unwrap();
+
+    let pair = Pair { x, y };
+    uwrite!(&mut W, "{:?}", pair).unwrap();
+    uwrite!(&mut W, "{:#?}", pair).unwrap();
+
+    let first = pair;
+    let second = pair;
+    uwrite!(&mut W, "{:?}", Nested { first, second }).unwrap();
+    uwrite!(&mut W, "{:#?}", Nested { first, second }).unwrap();
+}
+
+// ..
+```

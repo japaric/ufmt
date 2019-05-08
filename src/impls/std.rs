@@ -2,6 +2,30 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::{uDebug, uDisplay, uWrite, Formatter};
 
+impl<T> uDebug for Box<T>
+where
+    T: uDebug,
+{
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <T as uDebug>::fmt(self, f)
+    }
+}
+
+impl<T> uDisplay for Box<T>
+where
+    T: uDisplay,
+{
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        <T as uDisplay>::fmt(self, f)
+    }
+}
+
 impl<K, V> uDebug for BTreeMap<K, V>
 where
     K: uDebug,

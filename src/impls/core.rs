@@ -75,7 +75,7 @@ where
 //             if esc.len() != 1 {
 //                 f.write_str(
 //                     self.get(from..i)
-//                         .unwrap_or_else(|| unsafe { debug_unreachable!() }),
+//                         .unwrap_or_else(|| unsafe { assume_unreachable!() }),
 //                 )?;
 //                 for c in esc {
 //                     f.write_char(c)?;
@@ -86,7 +86,7 @@ where
 
 //         f.write_str(
 //             self.get(from..)
-//                 .unwrap_or_else(|| unsafe { debug_unreachable!() }),
+//                 .unwrap_or_else(|| unsafe { assume_unreachable!() }),
 //         )?;
 //         f.write_str("\"")
 //     }
@@ -151,5 +151,36 @@ where
         W: uWrite,
     {
         <T as uDisplay>::fmt(self, f)
+    }
+}
+
+impl<T> uDebug for Option<T>
+where
+    T: uDebug,
+{
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        match self {
+            None => f.write_str("None"),
+            Some(x) => f.debug_tuple("Some")?.field(x)?.finish(),
+        }
+    }
+}
+
+impl<T, E> uDebug for Result<T, E>
+where
+    T: uDebug,
+    E: uDebug,
+{
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        match self {
+            Err(e) => f.debug_tuple("Err")?.field(e)?.finish(),
+            Ok(x) => f.debug_tuple("Ok")?.field(x)?.finish(),
+        }
     }
 }

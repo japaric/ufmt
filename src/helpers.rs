@@ -4,8 +4,8 @@ impl<'w, W> Formatter<'w, W>
 where
     W: uWrite,
 {
-    /// Creates a `DebugList` builder designed to assist with creation of `fmt::Debug`
-    /// implementations for list-like structures.
+    /// Creates a `DebugList` builder designed to assist with creation of `uDebug` implementations
+    /// for list-like structures.
     pub fn debug_list(&mut self) -> Result<DebugList<'_, 'w, W>, W::Error> {
         self.write_str("[")?;
 
@@ -19,8 +19,8 @@ where
         })
     }
 
-    /// Creates a `DebugMap` builder designed to assist with creation of `fmt::Debug`
-    /// implementations for map-like structures.
+    /// Creates a `DebugMap` builder designed to assist with creation of `uDebug` implementations
+    /// for map-like structures.
     pub fn debug_map(&mut self) -> Result<DebugMap<'_, 'w, W>, W::Error> {
         self.write_str("{")?;
 
@@ -34,8 +34,8 @@ where
         })
     }
 
-    /// Creates a `DebugSet` builder designed to assist with creation of `fmt::Debug`
-    /// implementations for set-like structures.
+    /// Creates a `DebugSet` builder designed to assist with creation of `uDebug` implementations
+    /// for set-like structures.
     pub fn debug_set(&mut self) -> Result<DebugSet<'_, 'w, W>, W::Error> {
         self.write_str("{")?;
 
@@ -49,8 +49,8 @@ where
         })
     }
 
-    /// Creates a `DebugStruct` builder designed to assist with creation of `fmt::Debug`
-    /// implementations for structs.
+    /// Creates a `DebugStruct` builder designed to assist with creation of `uDebug` implementations
+    /// for structs.
     pub fn debug_struct(&mut self, name: &str) -> Result<DebugStruct<'_, 'w, W>, W::Error> {
         self.write_str(name)?;
 
@@ -64,8 +64,8 @@ where
         })
     }
 
-    /// Creates a `DebugTuple` builder designed to assist with creation of `fmt::Debug`
-    /// implementations for tuple structs.
+    /// Creates a `DebugTuple` builder designed to assist with creation of `uDebug` implementations
+    /// for tuple structs.
     pub fn debug_tuple(&mut self, name: &str) -> Result<DebugTuple<'_, 'w, W>, W::Error> {
         self.write_str(name)?;
 
@@ -82,10 +82,12 @@ where
     }
 }
 
-/// A struct to help with `fmt::Debug` implementations.
+/// A struct to help with [`uDebug`] implementations.
 ///
-/// This is useful when you wish to output a formatted list of items as a part of your `Debug::fmt`
-/// implementation.
+/// This is useful when you wish to output a formatted list of items as a part of your
+/// [`uDebug::fmt`] implementation.
+///
+/// This can be constructed by the [`Formatter::debug_list`] method.
 pub struct DebugList<'f, 'w, W>
 where
     W: uWrite,
@@ -135,7 +137,7 @@ where
         Ok(self)
     }
 
-    /// Finishes output and returns any error encountered.
+    /// Finishes output
     pub fn finish(&mut self) -> Result<(), W::Error> {
         if self.formatter.pretty {
             self.formatter.indentation -= 1;
@@ -146,10 +148,12 @@ where
     }
 }
 
-/// A struct to help with `fmt::Debug` implementations.
+/// A struct to help with [`uDebug`] implementations.
 ///
-/// This is useful when you wish to output a formatted map as a part of your `Debug::fmt`
+/// This is useful when you wish to output a formatted map as a part of your [`uDebug::fmt`]
 /// implementation.
+///
+/// This can be constructed by the [`Formatter::debug_map`] method.
 pub struct DebugMap<'f, 'w, W>
 where
     W: uWrite,
@@ -201,13 +205,18 @@ where
         Ok(self)
     }
 
-    /// Finishes output and returns any error encountered.
+    /// Finishes output
     pub fn finish(&mut self) -> Result<(), W::Error> {
         self.formatter.write_str("}")
     }
 }
 
-/// A struct to help with `fmt::Debug` implementations.
+/// A struct to help with [`uDebug`] implementations.
+///
+/// This is useful when you wish to output a formatted set of items as a part of your
+/// [`uDebug::fmt`] implementation.
+///
+/// This can be constructed by the [`Formatter::debug_set`] method.
 pub struct DebugSet<'f, 'w, W>
 where
     W: uWrite,
@@ -257,13 +266,18 @@ where
         Ok(self)
     }
 
-    /// Finishes output and returns any error encountered.
+    /// Finishes output
     pub fn finish(&mut self) -> Result<(), W::Error> {
         self.formatter.write_str("}")
     }
 }
 
-/// A struct to help with `fmt::Debug` implementations.
+/// A struct to help with [`uDebug`] implementations.
+///
+/// This is useful when you wish to output a formatted struct as a part of your [`uDebug::fmt`]
+/// implementation.
+///
+/// This can be constructed by the [`Formatter::debug_struct`] method.
 pub struct DebugStruct<'f, 'w, W>
 where
     W: uWrite,
@@ -307,7 +321,7 @@ where
         Ok(self)
     }
 
-    /// Finishes output and returns any error encountered.
+    /// Finishes output
     pub fn finish(&mut self) -> Result<(), W::Error> {
         if self.formatter.pretty {
             self.formatter.indentation -= 1;
@@ -327,7 +341,12 @@ where
     }
 }
 
-/// A struct to help with `fmt::Debug` implementations.
+/// A struct to help with [`uDebug`] implementations.
+///
+/// This is useful when you wish to output a formatted tuple as a part of your [`uDebug::fmt`]
+/// implementation.
+///
+/// This can be constructed by the [`Formatter::debug_tuple`] method.
 pub struct DebugTuple<'f, 'w, W>
 where
     W: uWrite,
@@ -371,7 +390,7 @@ where
         Ok(self)
     }
 
-    /// Finishes output and returns any error encountered.
+    /// Finishes output
     pub fn finish(&mut self) -> Result<(), W::Error> {
         if self.formatter.pretty {
             self.formatter.indentation -= 1;
