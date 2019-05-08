@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{derive::uDebug, uwrite, uwriteln};
+use crate::{derive::uDebug, uDebug, uWrite, uwrite, uwriteln, Formatter};
 
 macro_rules! uformat {
     ($($expr:expr),*) => {{
@@ -248,4 +248,23 @@ fn uwriteln() {
     uwriteln!(&mut s, "Hello").unwrap();
     uwriteln!(&mut s, "World",).unwrap();
     assert_eq!(s, "Hello\nWorld\n");
+}
+
+#[test]
+fn formatter_uwrite() {
+    #[derive(uDebug)]
+    struct X;
+
+    struct Y;
+
+    impl uDebug for Y {
+        fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+        where
+            W: uWrite,
+        {
+            uwrite!(f, "{:?}", X)
+        }
+    }
+
+    assert_eq!(uformat!("{:?}", Y).unwrap(), "X")
 }

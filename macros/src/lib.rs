@@ -241,7 +241,7 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
         })
         .collect::<Vec<_>>();
 
-    quote!(ufmt::do_(#formatter, |f| {
+    quote!(ufmt::unstable_do(#formatter, |f| {
         #(#exprs)*
         Ok(())
     }))

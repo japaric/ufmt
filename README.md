@@ -33,11 +33,17 @@ From highest priority to lowest priority
   error type. For example, the implementation for `std::String` uses
   `Infallible` as its error type.
 
-- `core::Formatter::debug_struct`-like API
+- `core::fmt::Formatter::debug_struct`-like API
 
 - `#[derive(uDebug)]`
 
 - Pretty formatting (`{:#?}`) for `uDebug`
+
+# Minimum Supported Rust Version (MSRV)
+
+Rust 1.34 for everything but the `uwrite!` macro which requires the unstable
+`proc_macro_hygiene` feature at call site and thus nightly. However, it's
+possible to use the stable `Formatter` API instead of `uwrite!`.
 
 ## License
 
