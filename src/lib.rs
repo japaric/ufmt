@@ -16,7 +16,7 @@
 //! - A generic [`Formatter<'_, impl uWrite>`][formatter] instead of a single `core::Formatter`; the
 //!   [`uWrite`] trait has an associated error type so each writer can choose its error type. For
 //!   example, the implementation for `std::String` uses [`Infallible`] as its error type.
-//! - [`core::Formatter::debug_struct`][debug_struct]-like API
+//! - [`core::fmt::Formatter::debug_struct`][debug_struct]-like API
 //! - [`#[derive(uDebug)]`][derive]
 //! - Pretty formatting (`{:#?}`) for `uDebug`
 //!
@@ -190,7 +190,8 @@
 //! # Minimum Supported Rust Version (MSRV)
 //!
 //! Rust 1.34 for everything but the `uwrite!` macro which requires the unstable
-//! `proc_macro_hygiene` feature at call site and thus nightly.
+//! `proc_macro_hygiene` feature at call site and thus nightly. However, it's possible to use the
+//! stable `Formatter` API instead of `uwrite!`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(test, feature(proc_macro_hygiene))]
@@ -216,6 +217,7 @@ mod macros;
 
 mod helpers;
 mod impls;
+mod sealed;
 #[cfg(all(test, feature = "std"))]
 mod tests;
 /// Derive macros
@@ -303,51 +305,12 @@ where
 // IMPLEMENTATION DETAIL
 // We use a trait here to avoid nesting `Formatter`s
 #[doc(hidden)]
-pub fn do_<D>(
+pub fn unstable_do<D>(
     fmt: D,
     f: impl FnOnce(&mut Formatter<'_, D::Writer>) -> Result<(), <D::Writer as uWrite>::Error>,
 ) -> Result<(), <D::Writer as uWrite>::Error>
 where
-    D: DoAsFormatter,
+    D: sealed::DoAsFormatter,
 {
     fmt.do_as_formatter(f)
-}
-
-// IMPLEMENTATION DETAIL
-#[doc(hidden)]
-pub trait DoAsFormatter {
-    type Writer: uWrite;
-
-    fn do_as_formatter(
-        self,
-        f: impl FnOnce(&mut Formatter<'_, Self::Writer>) -> Result<(), <Self::Writer as uWrite>::Error>,
-    ) -> Result<(), <Self::Writer as uWrite>::Error>;
-}
-
-impl<W> DoAsFormatter for &'_ mut W
-where
-    W: uWrite,
-{
-    type Writer = W;
-
-    fn do_as_formatter(
-        self,
-        f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
-    ) -> Result<(), W::Error> {
-        f(&mut Formatter::new(self))
-    }
-}
-
-impl<W> DoAsFormatter for &'_ mut Formatter<'_, W>
-where
-    W: uWrite,
-{
-    type Writer = W;
-
-    fn do_as_formatter(
-        self,
-        f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
-    ) -> Result<(), W::Error> {
-        f(self)
-    }
 }
