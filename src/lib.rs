@@ -74,7 +74,13 @@
 //!     f.pretty(|f| uDebug::fmt(&pair, f))
 //! }.unwrap();
 //!
-//! assert_eq!(s, "Pair {\n    x: 1,\n    y: 2,\n}");
+//! let pretty = "\
+//! Pair {
+//!     x: 1,
+//!     y: 2,
+//! }";
+//!
+//! assert_eq!(s, pretty);
 //! ```
 //!
 //! - on stable: implementing `uWrite`
