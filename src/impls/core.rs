@@ -153,3 +153,34 @@ where
         <T as uDisplay>::fmt(self, f)
     }
 }
+
+impl<T> uDebug for Option<T>
+where
+    T: uDebug,
+{
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        match self {
+            None => f.write_str("None"),
+            Some(x) => f.debug_tuple("Some")?.field(x)?.finish(),
+        }
+    }
+}
+
+impl<T, E> uDebug for Result<T, E>
+where
+    T: uDebug,
+    E: uDebug,
+{
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        match self {
+            Err(e) => f.debug_tuple("Err")?.field(e)?.finish(),
+            Ok(x) => f.debug_tuple("Ok")?.field(x)?.finish(),
+        }
+    }
+}

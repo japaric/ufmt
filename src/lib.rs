@@ -1,8 +1,8 @@
-//! `μfmt`, a smaller and faster alternative to `core::fmt`
+//! `μfmt`, a (6-40x) smaller, (2-9x) faster and panic-free alternative to `core::fmt`
 //!
 //! # Design goals
 //!
-//! Prioritized in that order
+//! From highest priority to lowest priority
 //!
 //! - Optimized for binary size and speed (rather than for compilation time)
 //! - No trait objects
@@ -12,7 +12,7 @@
 //! # Features
 //!
 //! - [`Debug`] and [`Display`]-like traits
-//! - [`core::write!`][uwrite]-like macro for string interpolation
+//! - [`core::write!`][uwrite]-like macro
 //! - A generic [`Formatter<'_, impl uWrite>`][formatter] instead of a single `core::Formatter`; the
 //!   [`uWrite`] trait has an associated error type so each writer can choose its error type. For
 //!   example, the implementation for `std::String` uses [`Infallible`] as its error type.

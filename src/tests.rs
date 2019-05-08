@@ -23,6 +23,44 @@ macro_rules! cmp {
 }
 
 #[test]
+fn core() {
+    cmp!("{:?}", None::<i32>);
+    cmp!("{:#?}", None::<i32>);
+
+    cmp!("{:?}", Some(0));
+    cmp!("{:#?}", Some(0));
+
+    cmp!("{:?}", Ok::<_, ()>(1));
+    cmp!("{:#?}", Ok::<_, ()>(1));
+
+    cmp!("{:?}", Err::<(), _>(2));
+    cmp!("{:#?}", Err::<(), _>(2));
+}
+
+#[test]
+fn recursion() {
+    #[derive(uDebug, Debug)]
+    struct Node {
+        value: i32,
+        next: Option<Box<Node>>,
+    }
+
+    fn x() -> Node {
+        let tail = Node {
+            value: 0,
+            next: None,
+        };
+        Node {
+            value: 1,
+            next: Some(Box::new(tail)),
+        }
+    }
+
+    cmp!("{:?}", x());
+    cmp!("{:#?}", x());
+}
+
+#[test]
 fn uxx() {
     cmp!("{}", 0u8);
     cmp!("{}", 10u8);

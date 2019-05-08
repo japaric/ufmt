@@ -8,9 +8,6 @@ use common::W;
 use cortex_m_rt::{entry, exception};
 use ufmt::{derive::uDebug, uwrite};
 
-static X: AtomicI32 = AtomicI32::new(0);
-static Y: AtomicI32 = AtomicI32::new(0);
-
 #[derive(uDebug)]
 struct Braces {}
 
@@ -22,12 +19,6 @@ struct I32(i32);
 
 #[derive(uDebug)]
 struct Tuple(i32, i32);
-
-#[derive(Clone, Copy, uDebug)]
-struct Pair {
-    x: i32,
-    y: i32,
-}
 
 #[derive(uDebug)]
 struct Nested {
@@ -42,6 +33,17 @@ fn main() -> ! {
         Y.fetch_add(1, Ordering::Relaxed);
     }
 }
+
+// ..
+
+#[derive(Clone, Copy, uDebug)]
+struct Pair {
+    x: i32,
+    y: i32,
+}
+
+static X: AtomicI32 = AtomicI32::new(0);
+static Y: AtomicI32 = AtomicI32::new(0);
 
 #[exception]
 fn PendSV() {
@@ -69,3 +71,5 @@ fn PendSV() {
     uwrite!(&mut W, "{:?}", Nested { first, second }).unwrap();
     uwrite!(&mut W, "{:#?}", Nested { first, second }).unwrap();
 }
+
+// ..
