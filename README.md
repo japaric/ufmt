@@ -10,6 +10,8 @@ program was compiled with `-C opt-level=z`.
 
 [`cargo-call-stack`]: https://crates.io/crates/cargo-call-stack
 
+## [API docs](https://docs.rs/ufmt)
+
 ## Design goals
 
 From highest priority to lowest priority
