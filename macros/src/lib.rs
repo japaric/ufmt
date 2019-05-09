@@ -206,10 +206,9 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
         Ok(pieces) => pieces,
     };
-    let mut args = input.args.iter();
 
     let required_args = pieces.iter().filter(|piece| !piece.is_str()).count();
-    let supplied_args = args.len();
+    let supplied_args = input.args.len();
     if supplied_args < required_args {
         return parse::Error::new(
             literal.span(),
@@ -224,39 +223,52 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
         .into();
     } else if supplied_args > required_args {
         return parse::Error::new(
-            args.nth(required_args).expect("UNREACHABLE").span(),
+            input.args[required_args].span(),
             &format!("argument never used"),
         )
         .to_compile_error()
         .into();
     }
 
-    let exprs = pieces
-        .iter()
-        .map(|piece| match piece {
-            Piece::Str(s) => quote!(f.write_str(#s)?;),
+    let mut args = vec![];
+    let mut pats = vec![];
+    let mut exprs = vec![];
+    let mut i = 0;
+    for piece in pieces {
+        if let Piece::Str(s) = piece {
+            exprs.push(quote!(f.write_str(#s)?;))
+        } else {
+            let pat = mk_ident(i);
+            let arg = &input.args[i];
+            i += 1;
 
-            Piece::Display => {
-                let arg = args.next().expect("UNREACHABLE");
-                quote!(ufmt::uDisplay::fmt(&(#arg), f)?;)
-            }
+            args.push(quote!(&(#arg)));
+            pats.push(quote!(#pat));
 
-            Piece::Debug { pretty } => {
-                let arg = args.next().expect("UNREACHABLE");
-
-                if *pretty {
-                    quote!(f.pretty(|f| ufmt::uDebug::fmt(&(#arg), f))?;)
-                } else {
-                    quote!(ufmt::uDebug::fmt(&(#arg), f)?;)
+            match piece {
+                Piece::Display => {
+                    exprs.push(quote!(ufmt::uDisplay::fmt(#pat, f)?;));
                 }
-            }
-        })
-        .collect::<Vec<_>>();
 
-    quote!(ufmt::unstable_do(#formatter, |f| {
-        #(#exprs)*
-        Ok(())
-    }))
+                Piece::Debug { pretty } => {
+                    exprs.push(if pretty {
+                        quote!(f.pretty(|f| ufmt::uDebug::fmt(#pat, f))?;)
+                    } else {
+                        quote!(ufmt::uDebug::fmt(#pat, f)?;)
+                    });
+                }
+
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    quote!(match (#(#args),*) {
+        (#(#pats),*) => ufmt::unstable_do(#formatter, |f| {
+            #(#exprs)*
+            Ok(())
+        })
+    })
     .into()
 }
 
@@ -308,6 +320,10 @@ impl Piece<'_> {
             _ => false,
         }
     }
+}
+
+fn mk_ident(i: usize) -> Ident {
+    Ident::new(&format!("__{}", i), Span::call_site())
 }
 
 // `}}` -> `}`
