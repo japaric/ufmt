@@ -12,10 +12,10 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::{
     parse::{self, Parse, ParseStream},
-    parse_macro_input,
+    parse_macro_input, parse_quote,
     punctuated::Punctuated,
     spanned::Spanned,
-    Data, DeriveInput, Expr, Fields, Ident, IntSuffix, LitInt, LitStr, Token,
+    Data, DeriveInput, Expr, Fields, GenericParam, Ident, IntSuffix, LitInt, LitStr, Token,
 };
 
 /// Automatically derive the `uDebug` trait for a `struct` or `enum`
@@ -29,6 +29,16 @@ use syn::{
 #[proc_macro_derive(uDebug)]
 pub fn debug(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
+
+    let mut generics = input.generics;
+
+    for param in &mut generics.params {
+        if let GenericParam::Type(type_param) = param {
+            type_param.bounds.push(parse_quote!(ufmt::uDebug));
+        }
+    }
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     let ident = &input.ident;
     let ts = match input.data {
@@ -67,7 +77,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
             };
 
             quote!(
-                impl ufmt::uDebug for #ident {
+                impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
                     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
                     where
                         W: ufmt::uWrite,
@@ -128,7 +138,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 .collect::<Vec<_>>();
 
             quote!(
-                impl ufmt::uDebug for #ident {
+                impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
                     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
                         where
                         W: ufmt::uWrite,

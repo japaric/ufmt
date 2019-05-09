@@ -268,3 +268,18 @@ fn formatter_uwrite() {
 
     assert_eq!(uformat!("{:?}", Y).unwrap(), "X")
 }
+
+#[test]
+fn generic() {
+    #[derive(uDebug, Debug)]
+    struct X<T>(T);
+
+    cmp!("{:?}", X(0));
+
+    #[derive(uDebug, Debug)]
+    enum Y<T> {
+        Z(T),
+    }
+
+    cmp!("{:?}", Y::Z(0));
+}
