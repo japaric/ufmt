@@ -234,7 +234,7 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
     let exprs = pieces
         .iter()
         .map(|piece| match piece {
-            Piece::Str(s) => quote!(ufmt::uDisplay::fmt(#s, f)?;),
+            Piece::Str(s) => quote!(f.write_str(#s)?;),
 
             Piece::Display => {
                 let arg = args.next().expect("UNREACHABLE");
