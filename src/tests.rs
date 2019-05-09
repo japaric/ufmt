@@ -283,3 +283,13 @@ fn generic() {
 
     cmp!("{:?}", Y::Z(0));
 }
+
+// compile-pass test
+#[allow(dead_code)]
+fn static_lifetime(x: &'static mut u32) {
+    fn foo(x: &'static mut u32) -> *mut u32 {
+        x as *mut u32
+    }
+
+    uwrite!(&mut String::new(), "{:?}", foo(x)).ok();
+}
