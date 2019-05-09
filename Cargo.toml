@@ -9,10 +9,10 @@ license = "MIT OR Apache-2.0"
 name = "ufmt"
 readme = "README.md"
 repository = "https://github.com/japaric/ufmt"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.4"
 
 [dependencies]
-ufmt-macros = { path = "macros", version = "0.1.0-beta.2" }
+ufmt-macros = { path = "macros", version = "0.1.0-beta.3" }
 ufmt-write = { path = "write", version = "0.1.0-beta.1" }
 
 # NOTE do NOT add an `alloc` feature before the alloc crate is stabilized
