@@ -62,12 +62,6 @@ All source code (including code snippets) is licensed under either of
 
 at your option.
 
-The written prose contained within the book is licensed under the terms of the
-Creative Commons CC-BY-SA v4.0 license ([LICENSE-CC-BY-SA](LICENSE-CC-BY-SA) or
-[https://creativecommons.org/licenses/by-sa/4.0/legalcode][L3]).
-
-[L3]: https://creativecommons.org/licenses/by-sa/4.0/legalcode
-
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
