@@ -11,8 +11,11 @@ cortex-m-rt = "0.6.5"
 heapless = { version = "0.4.4", features = ["const-fn"] }
 panic-never = "0.1.0"
 ufmt = { path = ".." }
+ufmt-utils = { path = "../utils" }
 
 [profile.release]
 codegen-units = 1 # better optimizations
 lto = true # better optimizations
 opt-level = "z"
+
+[workspace]

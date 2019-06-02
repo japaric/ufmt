@@ -1,9 +1,11 @@
 set -euxo pipefail
 
 main() {
-    cargo check --target $T
+    cargo check -p ufmt --target $T
 
     if [ $TRAVIS_RUST_VERSION = nightly ]; then
+        cargo check -p ufmt-utils --target $T
+
         case $T in
             *-unknown-linux-*)
                 cargo test --target $T --features std

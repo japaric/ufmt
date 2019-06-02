@@ -19,3 +19,10 @@ ufmt-write = { path = "write", version = "0.1.0-beta.1" }
 [features]
 # NOTE do NOT turn `std` into a default feature; this is a no-std first crate
 std = ["ufmt-write/std"]
+
+[workspace]
+members = [
+  "macros",
+  "utils",
+  "write",
+]
