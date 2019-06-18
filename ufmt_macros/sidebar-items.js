@@ -1,0 +1,1 @@
+initSidebarItems({"derive":[["uDebug","Automatically derive the `uDebug` trait for a `struct` or `enum`"]],"macro":[["uwrite","Write formatted data into a buffer"],["uwriteln","Write formatted data into a buffer, with a newline appended"]]});
