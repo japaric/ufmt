@@ -7,8 +7,8 @@ macro_rules! tuple {
             $($T: uDebug,)*
         {
             fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
-                where
-                W: uWrite,
+            where
+                W: uWrite + ?Sized,
             {
                 f.debug_tuple("")?$(.field(&self.$i)?)*.finish()
             }
@@ -20,7 +20,7 @@ macro_rules! tuple {
 impl uDebug for () {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.write_str("()")
     }

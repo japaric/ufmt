@@ -9,7 +9,7 @@ macro_rules! array {
             {
                 fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
                     where
-                    W: uWrite,
+                    W: uWrite + ?Sized,
                 {
                     <[T] as uDebug>::fmt(self, f)
                 }

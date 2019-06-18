@@ -30,7 +30,7 @@ fn usize(n: usize, buf: &mut [u8]) -> &str {
 impl uDebug for u8 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         let mut buf: [u8; 3] = unsafe { mem::uninitialized() };
 
@@ -42,7 +42,7 @@ impl uDisplay for u8 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u8 as uDebug>::fmt(self, f)
     }
@@ -51,7 +51,7 @@ impl uDisplay for u8 {
 impl uDebug for u16 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         let mut buf: [u8; 5] = unsafe { mem::uninitialized() };
 
@@ -63,7 +63,7 @@ impl uDisplay for u16 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u16 as uDebug>::fmt(self, f)
     }
@@ -72,7 +72,7 @@ impl uDisplay for u16 {
 impl uDebug for u32 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         let mut buf: [u8; 10] = unsafe { mem::uninitialized() };
 
@@ -84,7 +84,7 @@ impl uDisplay for u32 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u32 as uDebug>::fmt(self, f)
     }
@@ -94,7 +94,7 @@ impl uDebug for u64 {
     #[cfg(any(target_pointer_width = "32", target_pointer_width = "16"))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         let mut buf: [u8; 20] = unsafe { mem::uninitialized() };
 
@@ -105,7 +105,7 @@ impl uDebug for u64 {
     #[cfg(target_pointer_width = "64")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         let mut buf: [u8; 20] = unsafe { mem::uninitialized() };
 
@@ -117,7 +117,7 @@ impl uDisplay for u64 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u64 as uDebug>::fmt(self, f)
     }
@@ -126,7 +126,7 @@ impl uDisplay for u64 {
 impl uDebug for u128 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         let mut buf: [u8; 39] = unsafe { mem::uninitialized() };
 
@@ -139,7 +139,7 @@ impl uDisplay for u128 {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u128 as uDebug>::fmt(self, f)
     }
@@ -150,7 +150,7 @@ impl uDebug for usize {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u16 as uDebug>::fmt(&(*self as u16), f)
     }
@@ -159,7 +159,7 @@ impl uDebug for usize {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u32 as uDebug>::fmt(&(*self as u32), f)
     }
@@ -168,7 +168,7 @@ impl uDebug for usize {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u64 as uDebug>::fmt(&(*self as u64), f)
     }
@@ -179,7 +179,7 @@ impl uDisplay for usize {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u16 as uDisplay>::fmt(&(*self as u16), f)
     }
@@ -188,7 +188,7 @@ impl uDisplay for usize {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u32 as uDisplay>::fmt(&(*self as u32), f)
     }
@@ -197,7 +197,7 @@ impl uDisplay for usize {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <u64 as uDisplay>::fmt(&(*self as u64), f)
     }
