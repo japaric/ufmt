@@ -46,7 +46,7 @@ impl<T> uDebug for *const T {
     #[cfg(target_pointer_width = "16")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         hex!(self, f, 6)
     }
@@ -54,7 +54,7 @@ impl<T> uDebug for *const T {
     #[cfg(target_pointer_width = "32")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         hex!(self, f, 10)
     }
@@ -62,7 +62,7 @@ impl<T> uDebug for *const T {
     #[cfg(target_pointer_width = "64")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         hex!(self, f, 18)
     }
@@ -72,7 +72,7 @@ impl<T> uDebug for *mut T {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         (*self as *const T).fmt(f)
     }

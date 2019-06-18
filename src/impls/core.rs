@@ -3,7 +3,7 @@ use crate::{uDebug, uDisplay, uWrite, Formatter};
 impl uDebug for bool {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         if *self {
             f.write_str("true")
@@ -17,7 +17,7 @@ impl uDisplay for bool {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <bool as uDebug>::fmt(self, f)
     }
@@ -27,7 +27,7 @@ impl uDisplay for bool {
 // impl uDebug for char {
 //     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
 //     where
-//         W: uWrite,
+//         W: uWrite + ?Sized,
 //     {
 //         f.write_str("'")?;
 //         for c in self.escape_debug() {
@@ -41,7 +41,7 @@ impl uDisplay for char {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.write_char(*self)
     }
@@ -53,7 +53,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.debug_list()?.entries(self)?.finish()
     }
@@ -63,7 +63,7 @@ where
 // impl uDebug for str {
 //     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
 //     where
-//         W: uWrite,
+//         W: uWrite + ?Sized,
 //     {
 //         f.write_str("\"")?;
 
@@ -96,7 +96,7 @@ impl uDisplay for str {
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.write_str(self)
     }
@@ -109,7 +109,7 @@ where
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <T as uDebug>::fmt(self, f)
     }
@@ -122,7 +122,7 @@ where
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <T as uDisplay>::fmt(self, f)
     }
@@ -135,7 +135,7 @@ where
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <T as uDebug>::fmt(self, f)
     }
@@ -148,7 +148,7 @@ where
     #[inline(always)]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <T as uDisplay>::fmt(self, f)
     }
@@ -160,7 +160,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         match self {
             None => f.write_str("None"),
@@ -176,7 +176,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         match self {
             Err(e) => f.debug_tuple("Err")?.field(e)?.finish(),

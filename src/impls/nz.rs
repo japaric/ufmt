@@ -11,8 +11,8 @@ macro_rules! nz {
             impl uDebug for $NZ {
                 #[inline(always)]
                 fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
-                    where
-                    W: uWrite,
+                where
+                    W: uWrite + ?Sized,
                 {
                     <$inner as uDebug>::fmt(&self.get(), f)
                 }
@@ -21,8 +21,8 @@ macro_rules! nz {
             impl uDisplay for $NZ {
                 #[inline(always)]
                 fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
-                    where
-                    W: uWrite,
+                where
+                    W: uWrite + ?Sized,
                 {
                     <$inner as uDisplay>::fmt(&self.get(), f)
                 }

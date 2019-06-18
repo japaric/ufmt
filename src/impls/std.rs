@@ -8,7 +8,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <T as uDebug>::fmt(self, f)
     }
@@ -20,7 +20,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <T as uDisplay>::fmt(self, f)
     }
@@ -33,7 +33,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.debug_map()?.entries(self)?.finish()
     }
@@ -45,7 +45,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.debug_set()?.entries(self)?.finish()
     }
@@ -58,7 +58,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.debug_map()?.entries(self)?.finish()
     }
@@ -70,7 +70,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         f.debug_set()?.entries(self)?.finish()
     }
@@ -80,7 +80,7 @@ where
 // impl uDebug for String {
 //     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
 //     where
-//         W: uWrite,
+//         W: uWrite + ?Sized,
 //     {
 //         <str as uDebug>::fmt(self, f)
 //     }
@@ -89,7 +89,7 @@ where
 impl uDisplay for String {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <str as uDisplay>::fmt(self, f)
     }
@@ -101,7 +101,7 @@ where
 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite,
+        W: uWrite + ?Sized,
     {
         <[T] as uDebug>::fmt(self, f)
     }

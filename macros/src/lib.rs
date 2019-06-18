@@ -80,7 +80,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
                     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
                     where
-                        W: ufmt::uWrite,
+                        W: ufmt::uWrite + ?Sized,
                     {
                         #body
                     }
@@ -141,7 +141,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
                     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
                         where
-                        W: ufmt::uWrite,
+                        W: ufmt::uWrite + ?Sized,
                     {
                         match self {
                             #(#arms),*
@@ -165,7 +165,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
 ///
 /// This macro accepts a format string, a list of arguments, and a 'writer'. Arguments will be
 /// formatted according to the specified format string and the result will be passed to the writer.
-/// The writer must have type `&mut impl uWrite` or `&mut ufmt::Formatter<'_, impl uWrite>`. The
+/// The writer must have type `[&mut] impl uWrite` or `[&mut] ufmt::Formatter<'_, impl uWrite>`. The
 /// macro returns the associated `Error` type of the `uWrite`-r.
 ///
 /// The syntax is similar to [`core::write!`] but only a handful of argument types are accepted:
@@ -264,10 +264,14 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
     }
 
     quote!(match (#(#args),*) {
-        (#(#pats),*) => ufmt::unstable_do(#formatter, |f| {
-            #(#exprs)*
-            Ok(())
-        })
+        (#(#pats),*) => {
+            use ufmt::UnstableDoAsFormatter as _;
+
+            (#formatter).do_as_formatter(|f| {
+                #(#exprs)*
+                Ok(())
+            })
+        }
     })
     .into()
 }

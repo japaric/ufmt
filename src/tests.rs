@@ -1,3 +1,4 @@
+use core::convert::Infallible;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{derive::uDebug, uDebug, uWrite, uwrite, uwriteln, Formatter};
@@ -6,7 +7,7 @@ macro_rules! uformat {
     ($($expr:expr),*) => {{
         let mut s = String::new();
         #[allow(unreachable_code)]
-        match uwrite!(&mut s, $($expr,)*) {
+        match uwrite!(s, $($expr,)*) {
             Ok(_) => Ok(s),
             Err(e) => Err(e),
         }
@@ -260,7 +261,7 @@ fn formatter_uwrite() {
     impl uDebug for Y {
         fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
         where
-            W: uWrite,
+            W: uWrite + ?Sized,
         {
             uwrite!(f, "{:?}", X)
         }
@@ -292,4 +293,47 @@ fn static_lifetime(x: &'static mut u32) {
     }
 
     uwrite!(&mut String::new(), "{:?}", foo(x)).ok();
+}
+
+// test dynamically sized writer
+#[test]
+fn dst() {
+    #[allow(rust_2018_idioms)] // false positive?
+    struct Cursor<B>
+    where
+        B: ?Sized,
+    {
+        pos: usize,
+        buffer: B,
+    }
+
+    impl<B> Cursor<B> {
+        fn new(buffer: B) -> Self {
+            Cursor { pos: 0, buffer }
+        }
+    }
+
+    impl uWrite for Cursor<[u8]> {
+        type Error = Infallible;
+
+        fn write_str(&mut self, s: &str) -> Result<(), Infallible> {
+            let bytes = s.as_bytes();
+            let len = bytes.len();
+            let start = self.pos;
+            if let Some(buffer) = self.buffer.get_mut(start..start + len) {
+                buffer.copy_from_slice(bytes);
+                self.pos += len;
+            }
+
+            Ok(())
+        }
+    }
+
+    let mut cursor = Cursor::new([0; 256]);
+    let cursor: &mut Cursor<[u8]> = &mut cursor;
+
+    uwrite!(cursor, "The answer is {}", 42).ok();
+
+    let msg = b"The answer is 42";
+    assert_eq!(&cursor.buffer[..msg.len()], msg);
 }

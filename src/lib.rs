@@ -50,7 +50,7 @@
 //!
 //! let mut s = String::new();
 //! let pair = Pair { x: 1, y: 2 };
-//! uwrite!(&mut s, "{:?}", pair).unwrap();
+//! uwrite!(s, "{:?}", pair).unwrap();
 //! assert_eq!(s, "Pair { x: 1, y: 2 }");
 //! ```
 //!
@@ -223,7 +223,6 @@ mod macros;
 
 mod helpers;
 mod impls;
-mod sealed;
 #[cfg(all(test, feature = "std"))]
 mod tests;
 /// Derive macros
@@ -240,7 +239,7 @@ pub trait uDebug {
     /// Formats the value using the given formatter
     fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite;
+        W: uWrite + ?Sized;
 }
 
 /// Just like `core::fmt::Display`
@@ -249,14 +248,14 @@ pub trait uDisplay {
     /// Formats the value using the given formatter
     fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
-        W: uWrite;
+        W: uWrite + ?Sized;
 }
 
 /// Configuration for formatting
 #[allow(non_camel_case_types)]
 pub struct Formatter<'w, W>
 where
-    W: uWrite,
+    W: uWrite + ?Sized,
 {
     indentation: u8,
     pretty: bool,
@@ -265,7 +264,7 @@ where
 
 impl<'w, W> Formatter<'w, W>
 where
-    W: uWrite,
+    W: uWrite + ?Sized,
 {
     /// Creates a formatter from the given writer
     pub fn new(writer: &'w mut W) -> Self {
@@ -308,15 +307,41 @@ where
     }
 }
 
-// IMPLEMENTATION DETAIL
-// We use a trait here to avoid nesting `Formatter`s
+// Implementation detail of the `uwrite*!` macros
 #[doc(hidden)]
-pub fn unstable_do<D>(
-    fmt: D,
-    f: impl FnOnce(&mut Formatter<'_, D::Writer>) -> Result<(), <D::Writer as uWrite>::Error>,
-) -> Result<(), <D::Writer as uWrite>::Error>
+pub trait UnstableDoAsFormatter {
+    type Writer: uWrite + ?Sized;
+
+    fn do_as_formatter(
+        &mut self,
+        f: impl FnOnce(&mut Formatter<'_, Self::Writer>) -> Result<(), <Self::Writer as uWrite>::Error>,
+    ) -> Result<(), <Self::Writer as uWrite>::Error>;
+}
+
+impl<W> UnstableDoAsFormatter for W
 where
-    D: sealed::DoAsFormatter,
+    W: uWrite + ?Sized,
 {
-    fmt.do_as_formatter(f)
+    type Writer = W;
+
+    fn do_as_formatter(
+        &mut self,
+        f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
+    ) -> Result<(), W::Error> {
+        f(&mut Formatter::new(self))
+    }
+}
+
+impl<W> UnstableDoAsFormatter for Formatter<'_, W>
+where
+    W: uWrite + ?Sized,
+{
+    type Writer = W;
+
+    fn do_as_formatter(
+        &mut self,
+        f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
+    ) -> Result<(), W::Error> {
+        f(self)
+    }
 }
