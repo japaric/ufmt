@@ -43,6 +43,14 @@ fn hex(mut n: usize, buf: &mut [u8]) -> usize {
 }
 
 impl<T> uDebug for *const T {
+    #[cfg(target_pointer_width = "16")]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite,
+    {
+        hex!(self, f, 6)
+    }
+
     #[cfg(target_pointer_width = "32")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
