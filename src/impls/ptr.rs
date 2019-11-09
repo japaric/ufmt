@@ -4,7 +4,7 @@ use crate::{uDebug, uWrite, Formatter};
 
 macro_rules! hex {
     ($self:expr, $f:expr, $N:expr) => {{
-        let mut buf: [u8; $N] = unsafe { core::mem::uninitialized() };
+        let mut buf = unsafe { core::mem::MaybeUninit::<[u8; $N]>::uninit().assume_init() };
 
         let i = hex(*$self as usize, &mut buf);
 

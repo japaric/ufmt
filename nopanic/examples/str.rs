@@ -5,10 +5,10 @@
 use common::W;
 use cortex_m::interrupt;
 use cortex_m_rt::{entry, exception};
-use heapless::{consts::*, String};
+use heapless::{consts::*, String, i};
 use ufmt::uwrite;
 
-static mut A: String<U32> = String::new();
+static mut A: String<U32> = String(i::String::new());
 
 #[entry]
 fn main() -> ! {

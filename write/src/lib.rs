@@ -2,8 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
-#![deny(rust_2018_compatibility)]
-#![deny(rust_2018_idioms)]
 #![deny(warnings)]
 
 #[cfg(feature = "std")]
@@ -28,7 +26,7 @@ pub trait uWrite {
     /// entire byte sequence was successfully written, and this method will not return until all
     /// data has been written or an error occurs.
     fn write_char(&mut self, c: char) -> Result<(), Self::Error> {
-        let mut buf: [u8; 4] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 4]>::uninit().assume_init() };
         self.write_str(c.encode_utf8(&mut buf))
     }
 }

@@ -5,10 +5,10 @@
 use common::W;
 use cortex_m::interrupt;
 use cortex_m_rt::{entry, exception};
-use heapless::{consts::*, Vec};
+use heapless::{consts::*, Vec, i};
 use ufmt::uwrite;
 
-static mut A: Vec<i8, U32> = Vec::new();
+static mut A: Vec<i8, U32> = Vec(i::Vec::new());
 
 #[entry]
 fn main() -> ! {

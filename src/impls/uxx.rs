@@ -32,7 +32,7 @@ impl uDebug for u8 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 3] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 3]>::uninit().assume_init() };
 
         f.write_str(usize(usize::from(*self), &mut buf))
     }
@@ -53,7 +53,7 @@ impl uDebug for u16 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 5] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 5]>::uninit().assume_init() };
 
         f.write_str(usize(usize::from(*self), &mut buf))
     }
@@ -74,7 +74,7 @@ impl uDebug for u32 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 10] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 10]>::uninit().assume_init() };
 
         f.write_str(usize(*self as usize, &mut buf))
     }
@@ -96,7 +96,7 @@ impl uDebug for u64 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 20] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 20]>::uninit().assume_init() };
 
         let s = uxx!(*self, buf);
         f.write_str(s)
@@ -107,7 +107,7 @@ impl uDebug for u64 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 20] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 20]>::uninit().assume_init() };
 
         f.write_str(usize(*self as usize, &mut buf))
     }
@@ -128,7 +128,7 @@ impl uDebug for u128 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 39] = unsafe { mem::uninitialized() };
+        let mut buf = unsafe { mem::MaybeUninit::<[u8; 39]>::uninit().assume_init() };
 
         let s = uxx!(*self, buf);
         f.write_str(s)

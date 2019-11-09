@@ -8,14 +8,14 @@ use core::mem;
 use proc_macro::TokenStream;
 use std::borrow::Cow;
 
-use proc_macro2::Span;
+use proc_macro2::{Span, Literal};
 use quote::quote;
 use syn::{
     parse::{self, Parse, ParseStream},
     parse_macro_input, parse_quote,
     punctuated::Punctuated,
     spanned::Spanned,
-    Data, DeriveInput, Expr, Fields, GenericParam, Ident, IntSuffix, LitInt, LitStr, Token,
+    Data, DeriveInput, Expr, Fields, GenericParam, Ident, LitInt, LitStr, Token,
 };
 
 /// Automatically derive the `uDebug` trait for a `struct` or `enum`
@@ -64,7 +64,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 Fields::Unnamed(fields) => {
                     let fields = (0..fields.unnamed.len())
                         .map(|i| {
-                            let i = LitInt::new(i as u64, IntSuffix::None, Span::call_site());
+                            let i = LitInt::from(Literal::u64_unsuffixed(i as u64));
 
                             quote!(field(&self.#i)?)
                         })
