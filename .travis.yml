@@ -4,7 +4,7 @@ matrix:
   include:
     # MSRV
     - env: T=x86_64-unknown-linux-gnu
-      rust: 1.34.0
+      rust: 1.36.0
       if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
     # NOTE used to build docs on successful merges to master

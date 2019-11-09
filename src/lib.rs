@@ -195,7 +195,7 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! Rust 1.34 for everything but the `uwrite!` macro which requires the unstable
+//! Rust 1.36 for everything but the `uwrite!` macro which requires the unstable
 //! `proc_macro_hygiene` feature at call site and thus nightly. However, it's possible to use the
 //! stable `Formatter` API instead of `uwrite!`.
 
