@@ -1,4 +1,3 @@
-#![feature(proc_macro_hygiene)]
 #![no_main]
 #![no_std]
 

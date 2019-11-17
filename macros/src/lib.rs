@@ -8,14 +8,15 @@ use core::mem;
 use proc_macro::TokenStream;
 use std::borrow::Cow;
 
-use proc_macro2::Span;
+use proc_macro2::{Literal, Span};
+use proc_macro_hack::proc_macro_hack;
 use quote::quote;
 use syn::{
     parse::{self, Parse, ParseStream},
     parse_macro_input, parse_quote,
     punctuated::Punctuated,
     spanned::Spanned,
-    Data, DeriveInput, Expr, Fields, GenericParam, Ident, IntSuffix, LitInt, LitStr, Token,
+    Data, DeriveInput, Expr, Fields, GenericParam, Ident, LitStr, Token,
 };
 
 /// Automatically derive the `uDebug` trait for a `struct` or `enum`
@@ -64,7 +65,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 Fields::Unnamed(fields) => {
                     let fields = (0..fields.unnamed.len())
                         .map(|i| {
-                            let i = LitInt::new(i as u64, IntSuffix::None, Span::call_site());
+                            let i = Literal::u64_unsuffixed(i as u64);
 
                             quote!(field(&self.#i)?)
                         })
@@ -161,33 +162,12 @@ pub fn debug(input: TokenStream) -> TokenStream {
     ts.into()
 }
 
-/// Write formatted data into a buffer
-///
-/// This macro accepts a format string, a list of arguments, and a 'writer'. Arguments will be
-/// formatted according to the specified format string and the result will be passed to the writer.
-/// The writer must have type `[&mut] impl uWrite` or `[&mut] ufmt::Formatter<'_, impl uWrite>`. The
-/// macro returns the associated `Error` type of the `uWrite`-r.
-///
-/// The syntax is similar to [`core::write!`] but only a handful of argument types are accepted:
-///
-/// [`core::write!`]: https://doc.rust-lang.org/core/macro.write.html
-///
-/// - `{}` - `uDisplay`
-/// - `{:?}` - `uDebug`
-/// - `{:#?}` - "pretty" `uDebug`
-///
-/// Named parameters and "specified" positional parameters (`{0}`) are not supported.
-///
-/// `{{` and `}}` can be used to escape braces.
-#[proc_macro]
+#[proc_macro_hack]
 pub fn uwrite(input: TokenStream) -> TokenStream {
     write(input, false)
 }
 
-/// Write formatted data into a buffer, with a newline appended
-///
-/// See [`uwrite!`](macro.uwrite.html) for more details
-#[proc_macro]
+#[proc_macro_hack]
 pub fn uwriteln(input: TokenStream) -> TokenStream {
     write(input, true)
 }

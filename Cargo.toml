@@ -9,16 +9,22 @@ license = "MIT OR Apache-2.0"
 name = "ufmt"
 readme = "README.md"
 repository = "https://github.com/japaric/ufmt"
-version = "0.1.0-beta.5"
+version = "0.1.0"
 
 [dependencies]
-ufmt-macros = { path = "macros", version = "0.1.0-beta.4" }
-ufmt-write = { path = "write", version = "0.1.0-beta.1" }
+proc-macro-hack = "0.5.11"
+ufmt-macros = { path = "macros", version = "0.1.0" }
+ufmt-write = { path = "write", version = "0.1.0" }
 
-# NOTE do NOT add an `alloc` feature before the alloc crate is stabilized
+# NOTE do NOT add an `alloc` feature before the alloc crate can be used in
+# no-std BINARIES
 [features]
 # NOTE do NOT turn `std` into a default feature; this is a no-std first crate
 std = ["ufmt-write/std"]
+
+[[test]]
+name = "vs-std-write"
+required-features = ["std"]
 
 [workspace]
 members = [

@@ -1,4 +1,3 @@
-#![feature(proc_macro_hygiene)]
 #![no_main]
 #![no_std]
 
@@ -33,8 +32,6 @@ fn main() -> ! {
         Y.fetch_add(1, Ordering::Relaxed);
     }
 }
-
-// ..
 
 #[derive(Clone, Copy, uDebug)]
 struct Pair {
@@ -71,5 +68,3 @@ fn PendSV() {
     uwrite!(&mut W, "{:?}", Nested { first, second }).unwrap();
     uwrite!(&mut W, "{:#?}", Nested { first, second }).unwrap();
 }
-
-// ..

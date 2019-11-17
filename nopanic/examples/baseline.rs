@@ -1,4 +1,5 @@
-#![feature(proc_macro_hygiene)]
+// used as a reference in the `size` output (see ci/script.sh)
+
 #![no_main]
 #![no_std]
 

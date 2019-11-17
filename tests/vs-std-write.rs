@@ -1,13 +1,13 @@
 use core::convert::Infallible;
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{derive::uDebug, uDebug, uWrite, uwrite, uwriteln, Formatter};
+use ufmt::{derive::uDebug, uDebug, uWrite, uwrite, uwriteln, Formatter};
 
 macro_rules! uformat {
-    ($($expr:expr),*) => {{
+    ($($tt:tt)*) => {{
         let mut s = String::new();
         #[allow(unreachable_code)]
-        match uwrite!(s, $($expr,)*) {
+        match ufmt::uwrite!(&mut s, $($tt)*) {
             Ok(_) => Ok(s),
             Err(e) => Err(e),
         }
@@ -15,10 +15,10 @@ macro_rules! uformat {
 }
 
 macro_rules! cmp {
-    ($s:expr $(,$args:expr)*) => {
+    ($($tt:tt)*) => {
         assert_eq!(
-            uformat!($s $(,$args)*),
-            Ok(format!($s $(,$args)*)),
+            uformat!($($tt)*),
+            Ok(format!($($tt)*)),
         )
     }
 }
