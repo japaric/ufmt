@@ -2,9 +2,14 @@ language: rust
 
 matrix:
   include:
-      # MSRV
+      # `ufmt` MSRV
     - env: T=x86_64-unknown-linux-gnu
       rust: 1.34.0
+      if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
+
+      # `ufmt-utils` MSRV
+    - env: T=x86_64-unknown-linux-gnu
+      rust: 1.36.0
       if: (branch = staging OR branch = trying) OR (type = pull_request AND branch = master)
 
       # 64-bit

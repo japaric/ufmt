@@ -2,6 +2,11 @@ set -euxo pipefail
 
 main() {
     cargo check -p ufmt --target $T
+
+    if [ $TRAVIS_RUST_VERSION = 1.34.0 ]; then
+        return
+    fi
+
     cargo check -p ufmt-utils --target $T
 
     case $T in
