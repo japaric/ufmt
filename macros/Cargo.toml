@@ -7,15 +7,16 @@ keywords = ["Debug", "Display", "Write", "format"]
 license = "MIT OR Apache-2.0"
 name = "ufmt-macros"
 repository = "https://github.com/japaric/ufmt"
-version = "0.1.0-beta.4"
+version = "0.1.0"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-quote = "0.6.12"
-proc-macro2 = "0.4.29"
+proc-macro-hack = "0.5.11"
+proc-macro2 = "1"
+quote = "1"
 
 [dependencies.syn]
 features = ["full"]
-version = "0.15.33"
+version = "1"

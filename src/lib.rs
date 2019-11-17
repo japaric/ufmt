@@ -5,9 +5,9 @@
 //! From highest priority to lowest priority
 //!
 //! - Optimized for binary size and speed (rather than for compilation time)
-//! - No trait objects
-//! - No panicking branches when optimized
-//! - No recursion (if / where possible)
+//! - No dynamic dispatch in generated code
+//! - No panicking branches in generated code, when optimized
+//! - No recursion where possible
 //!
 //! # Features
 //!
@@ -38,11 +38,9 @@
 //!
 //! # Examples
 //!
-//! - on nightly: `uwrite!` / `uwriteln!`
+//! - `uwrite!` / `uwriteln!`
 //!
 //! ```
-//! #![feature(proc_macro_hygiene)]
-//!
 //! use ufmt::{derive::uDebug, uwrite};
 //!
 //! #[derive(uDebug)]
@@ -54,36 +52,7 @@
 //! assert_eq!(s, "Pair { x: 1, y: 2 }");
 //! ```
 //!
-//! - on stable: `Formatter`
-//!
-//! The `uwrite!` macro requires nightly. On stable you can directly use the `Formatter` API.
-//!
-//! ```
-//! use ufmt::{derive::uDebug, uDebug, Formatter, uwrite};
-//!
-//! #[derive(uDebug)]
-//! struct Pair { x: u32, y: u32 }
-//!
-//! let mut s = String::new();
-//! let pair = Pair { x: 1, y: 2 };
-//!
-//! // equivalent to `uwrite!("{:#?}", pair).unwrap()`
-//! {
-//!     let mut f = Formatter::new(&mut s);
-//!
-//!     f.pretty(|f| uDebug::fmt(&pair, f))
-//! }.unwrap();
-//!
-//! let pretty = "\
-//! Pair {
-//!     x: 1,
-//!     y: 2,
-//! }";
-//!
-//! assert_eq!(s, pretty);
-//! ```
-//!
-//! - on stable: implementing `uWrite`
+//! - implementing `uWrite`
 //!
 //! When implementing the `uWrite` trait you should prefer the `ufmt_write::uWrite` crate over the
 //! `ufmt::uWrite` crate for better forward compatibility.
@@ -102,6 +71,29 @@
 //!         // ..
 //!         Ok(())
 //!     }
+//! }
+//! ```
+//!
+//! - writing a `macro_rules!` macro that uses `uwrite!` (or `uwriteln!`).
+//!
+//! Both `ufmt` macros are implemented using [`proc-macro-hack`]; care is needed to avoid running
+//! into the compiler bug [#43081](https://github.com/rust-lang/rust/issues/43081). See also
+//! [dtolnay/proc-macro-hack#46][pmh-46].
+//!
+//! [`proc-macro-hack`]: https://github.com/dtolnay/proc-macro-hack
+//! [pmh-46]: https://github.com/dtolnay/proc-macro-hack/issues/46
+//!
+//! ```
+//! // like `std::format!` it returns a `std::String` but uses `uwrite!` instead of `write!`
+//! macro_rules! uformat {
+//!     // IMPORTANT use `tt` fragments instead of `expr` fragments (i.e. `$($exprs:expr),*`)
+//!     ($($tt:tt)*) => {{
+//!         let mut s = String::new();
+//!         match ufmt::uwrite!(&mut s, $($tt)*) {
+//!             Ok(_) => Ok(s),
+//!             Err(e) => Err(e),
+//!         }
+//!     }}
 //! }
 //! ```
 //!
@@ -195,12 +187,10 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! Rust 1.34 for everything but the `uwrite!` macro which requires the unstable
-//! `proc_macro_hygiene` feature at call site and thus nightly. However, it's possible to use the
-//! stable `Formatter` API instead of `uwrite!`.
+//! This crate is guaranteed to compile on stable Rust 1.34 and up. It *might* compile on older
+//! versions but that may change in any new patch release.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(proc_macro_hygiene))]
 #![deny(missing_docs)]
 #![deny(rust_2018_compatibility)]
 #![deny(rust_2018_idioms)]
@@ -213,8 +203,35 @@ extern crate self as ufmt;
 
 use core::str;
 
-pub use ufmt_macros::{uwrite, uwriteln};
+use proc_macro_hack::proc_macro_hack;
 pub use ufmt_write::uWrite;
+
+/// Write formatted data into a buffer
+///
+/// This macro accepts a format string, a list of arguments, and a 'writer'. Arguments will be
+/// formatted according to the specified format string and the result will be passed to the writer.
+/// The writer must have type `[&mut] impl uWrite` or `[&mut] ufmt::Formatter<'_, impl uWrite>`. The
+/// macro returns the associated `Error` type of the `uWrite`-r.
+///
+/// The syntax is similar to [`core::write!`] but only a handful of argument types are accepted:
+///
+/// [`core::write!`]: https://doc.rust-lang.org/core/macro.write.html
+///
+/// - `{}` - `uDisplay`
+/// - `{:?}` - `uDebug`
+/// - `{:#?}` - "pretty" `uDebug`
+///
+/// Named parameters and "specified" positional parameters (`{0}`) are not supported.
+///
+/// `{{` and `}}` can be used to escape braces.
+#[proc_macro_hack]
+pub use ufmt_macros::uwrite;
+
+/// Write formatted data into a buffer, with a newline appended
+///
+/// See [`uwrite!`](macro.uwrite.html) for more details
+#[proc_macro_hack]
+pub use ufmt_macros::uwriteln;
 
 pub use crate::helpers::{DebugList, DebugMap, DebugStruct, DebugTuple};
 
@@ -223,15 +240,15 @@ mod macros;
 
 mod helpers;
 mod impls;
-#[cfg(all(test, feature = "std"))]
-mod tests;
 /// Derive macros
 pub mod derive {
     pub use ufmt_macros::uDebug;
 }
 
-#[cfg(all(test, not(feature = "std")))]
-compile_error!("run `cargo test --features std` instead of `cargo test`");
+#[allow(deprecated)]
+unsafe fn uninitialized<T>() -> T {
+    core::mem::uninitialized()
+}
 
 /// Just like `core::fmt::Debug`
 #[allow(non_camel_case_types)]

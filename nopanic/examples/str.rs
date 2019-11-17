@@ -1,14 +1,13 @@
-#![feature(proc_macro_hygiene)]
 #![no_main]
 #![no_std]
 
 use common::W;
 use cortex_m::interrupt;
 use cortex_m_rt::{entry, exception};
-use heapless::{consts::*, String};
+use heapless::{consts::*, i, String};
 use ufmt::uwrite;
 
-static mut A: String<U32> = String::new();
+static mut A: String<U32> = String(i::String::new());
 
 #[entry]
 fn main() -> ! {

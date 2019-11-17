@@ -18,11 +18,11 @@ From highest priority to lowest priority
 
 - Optimized for binary size and speed (rather than for compilation time)
 
-- No trait objects
+- No dynamic dispatch in generated code
 
-- No panicking branches when optimized
+- No panicking branches in generated code, when optimized
 
-- No recursion (if / where possible)
+- No recursion where possible
 
 ## Features
 
@@ -43,9 +43,8 @@ From highest priority to lowest priority
 
 # Minimum Supported Rust Version (MSRV)
 
-Rust 1.34 for everything but the `uwrite!` macro which requires the unstable
-`proc_macro_hygiene` feature at call site and thus nightly. However, it's
-possible to use the stable `Formatter` API instead of `uwrite!`.
+This crate is guaranteed to compile on stable Rust 1.34 and up. It *might*
+compile on older versions but that may change in any new patch release.
 
 ## License
 

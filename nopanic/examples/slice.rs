@@ -1,14 +1,13 @@
-#![feature(proc_macro_hygiene)]
 #![no_main]
 #![no_std]
 
 use common::W;
 use cortex_m::interrupt;
 use cortex_m_rt::{entry, exception};
-use heapless::{consts::*, Vec};
+use heapless::{consts::*, i, Vec};
 use ufmt::uwrite;
 
-static mut A: Vec<i8, U32> = Vec::new();
+static mut A: Vec<i8, U32> = Vec(i::Vec::new());
 
 #[entry]
 fn main() -> ! {

@@ -1,6 +1,3 @@
-// used as a reference in the `size` output (see ci/script.sh)
-
-#![feature(proc_macro_hygiene)]
 #![no_main]
 #![no_std]
 

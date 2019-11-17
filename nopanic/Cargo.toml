@@ -6,9 +6,9 @@ publish = false
 version = "0.0.0"
 
 [dependencies]
-cortex-m = "0.5.10"
-cortex-m-rt = "0.6.5"
-heapless = { version = "0.4.4", features = ["const-fn"] }
+cortex-m = "0.6.1"
+cortex-m-rt = "0.6.10"
+heapless = "0.5.1"
 panic-never = "0.1.0"
 ufmt = { path = ".." }
 ufmt-utils = { path = "../utils" }
