@@ -6,7 +6,6 @@
 #![deny(rust_2018_idioms)]
 #![deny(warnings)]
 
-#[cfg(feature = "std")]
 use core::convert::Infallible;
 
 #[allow(deprecated)]
@@ -37,12 +36,12 @@ pub trait uWrite {
     }
 }
 
-#[cfg(feature = "std")]
-impl uWrite for String {
+impl<T: core::fmt::Write> uWrite for T
+{
     type Error = Infallible;
 
     fn write_str(&mut self, s: &str) -> Result<(), Infallible> {
-        self.push_str(s);
+        self.write_str(s).ok();
         Ok(())
     }
 }

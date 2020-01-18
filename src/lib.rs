@@ -162,18 +162,6 @@
 //!
 //! struct W;
 //!
-//! impl uWrite for W {
-//!     type Error = Infallible;
-//!
-//!     fn write_str(&mut self, s: &str) -> Result<(), Infallible> {
-//!         s.as_bytes()
-//!             .iter()
-//!             .for_each(|b| unsafe { drop(ptr::read_volatile(b)) });
-//!
-//!         Ok(())
-//!     }
-//! }
-//!
 //! impl fmt::Write for W {
 //!     fn write_str(&mut self, s: &str) -> fmt::Result {
 //!         s.as_bytes()
