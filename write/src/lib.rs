@@ -6,8 +6,7 @@
 #![deny(rust_2018_idioms)]
 #![deny(warnings)]
 
-#[cfg(feature = "std")]
-use core::convert::Infallible;
+use core::fmt::Error;
 
 #[allow(deprecated)]
 unsafe fn uninitialized<T>() -> T {
@@ -37,12 +36,11 @@ pub trait uWrite {
     }
 }
 
-#[cfg(feature = "std")]
-impl uWrite for String {
-    type Error = Infallible;
+impl<T: core::fmt::Write> uWrite for T
+{
+    type Error = Error;
 
-    fn write_str(&mut self, s: &str) -> Result<(), Infallible> {
-        self.push_str(s);
-        Ok(())
+    fn write_str(&mut self, s: &str) -> Result<(), Error> {
+        self.write_str(s)
     }
 }
