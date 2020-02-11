@@ -13,3 +13,6 @@ version = "0.1.0"
 [dependencies]
 heapless = "0.5.0"
 ufmt-write = { version = "0.1.0", path = "../write" }
+
+[dev-dependencies]
+ufmt = { version = "0.1.0", path = ".." }
