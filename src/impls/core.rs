@@ -59,38 +59,37 @@ where
     }
 }
 
-// FIXME this (`escape_debug`) contains a panicking branch
-// impl uDebug for str {
-//     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
-//     where
-//         W: uWrite + ?Sized,
-//     {
-//         f.write_str("\"")?;
+impl uDebug for str {
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized,
+    {
+        f.write_str("\"")?;
+        let mut from = 0;
+        for (i, c) in self.char_indices() {
+            let esc = c.escape_debug();
 
-//         let mut from = 0;
-//         for (i, c) in self.char_indices() {
-//             let esc = c.escape_debug();
+            // If char needs escaping, flush backlog so far and write, else skip
+            if esc.len() != 1 {
+                // SAFETY: `char_indices()` guarantees that `i` is always the index of utf-8 boundary of `c`.
+                // In the first iteration `from` is zero and therefore also the index of the bounardy of `c`.
+                // In the following iterations `from` either keeps its value or is set to `i + c.len_utf8()`
+                // (with last rounds `i` and `c`), which means `from` is again `i` (this round), the index
+                // of this rounds `c`. Notice that this also implies `from <= i`.
+                f.write_str(self.get_unchecked(from..i))?;
+                for c in esc {
+                    f.write_char(c)?;
+                }
+                from = i + c.len_utf8();
+            }
+        }
 
-//             // If char needs escaping, flush backlog so far and write, else skip
-//             if esc.len() != 1 {
-//                 f.write_str(
-//                     self.get(from..i)
-//                         .unwrap_or_else(|| unsafe { assume_unreachable!() }),
-//                 )?;
-//                 for c in esc {
-//                     f.write_char(c)?;
-//                 }
-//                 from = i + c.len_utf8();
-//             }
-//         }
-
-//         f.write_str(
-//             self.get(from..)
-//                 .unwrap_or_else(|| unsafe { assume_unreachable!() }),
-//         )?;
-//         f.write_str("\"")
-//     }
-// }
+        // SAFETY: As seen above, `from` is the index of an utf-8 boundary in `self`.
+        // This also means that from is in bounds of `self`: `from <= self.len()`.
+        f.write_str(self.get_unchecked(from..)?;
+        f.write_str("\"")
+    }
+}
 
 impl uDisplay for str {
     #[inline(always)]
