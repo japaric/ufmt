@@ -86,7 +86,7 @@ impl uDebug for str {
 
         // SAFETY: As seen above, `from` is the index of an utf-8 boundary in `self`.
         // This also means that from is in bounds of `self`: `from <= self.len()`.
-        f.write_str(self.get_unchecked(from..)?;
+        f.write_str(self.get_unchecked(from..))?;
         f.write_str("\"")
     }
 }
