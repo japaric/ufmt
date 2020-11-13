@@ -76,7 +76,7 @@ impl uDebug for str {
                 // In the following iterations `from` either keeps its value or is set to `i + c.len_utf8()`
                 // (with last rounds `i` and `c`), which means `from` is again `i` (this round), the index
                 // of this rounds `c`. Notice that this also implies `from <= i`.
-                f.write_str(self.get_unchecked(from..i))?;
+                f.write_str(unsafe { self.get_unchecked(from..i) })?;
                 for c in esc {
                     f.write_char(c)?;
                 }
@@ -86,7 +86,7 @@ impl uDebug for str {
 
         // SAFETY: As seen above, `from` is the index of an utf-8 boundary in `self`.
         // This also means that from is in bounds of `self`: `from <= self.len()`.
-        f.write_str(self.get_unchecked(from..))?;
+        f.write_str(unsafe { self.get_unchecked(from..) })?;
         f.write_str("\"")
     }
 }
