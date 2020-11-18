@@ -14,11 +14,23 @@ macro_rules! uformat {
     }};
 }
 
+#[cfg(feature = "debug_hex")]
+macro_rules! format_debug_hex {
+    ("{:?}", $($tt:tt)*) => (format!("{:x?}", $($tt)*));
+    ("{:#?}", $($tt:tt)*) => (format!("{:#x?}", $($tt)*));
+    ($($tt:tt)*) => (format!($($tt)*));
+}
+
 macro_rules! cmp {
     ($($tt:tt)*) => {
         assert_eq!(
             uformat!($($tt)*),
-            Ok(format!($($tt)*)),
+            {
+                #[cfg(not(feature = "debug_hex"))]
+                {Ok(format!($($tt)*))}
+                #[cfg(feature = "debug_hex")]
+                Ok(format_debug_hex!($($tt)*))
+            }
         )
     }
 }
