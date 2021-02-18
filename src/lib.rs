@@ -26,7 +26,7 @@
 //! [formatter]: struct.Formatter.html
 //! [`uWrite`]: trait.uWrite.html
 //! [`Infallible`]: https://doc.rust-lang.org/core/convert/enum.Infallible.html
-//! [debug_struct]: file:///home/japaric/rust/ufmt/target/doc/ufmt/struct.Formatter.html#method.debug_list
+//! [debug_struct]: struct.Formatter.html#method.debug_struct
 //! [derive]: derive/index.html
 //!
 //! # Non-features
