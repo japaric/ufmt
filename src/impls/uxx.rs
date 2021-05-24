@@ -23,11 +23,55 @@ macro_rules! uxx {
     }};
 }
 
+#[cfg(feature = "debug_hex")]
+macro_rules! uxx_hex {
+    ($n:expr, $buf:expr, $pretty:expr) => {{
+        let mut n = $n;
+        let mut i = $buf.len() - 1;
+        loop {
+            *$buf
+                .get_mut(i)
+                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = {
+                    let d = (n as u8) & 0xf;
+                    if d < 10 {
+                        d + b'0'
+                    } else {
+                        (d - 10) + b'a'
+                    }
+                };
+            n = n >> 4;
+
+            if n == 0 {
+                break;
+            } else {
+                i -= 1;
+            }
+        }
+
+        if $pretty {
+            i -= 2;
+            *$buf
+                .get_mut(i+1)
+                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = b'x';
+            *$buf
+                .get_mut(i)
+                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = b'0';
+        }
+
+        unsafe { str::from_utf8_unchecked($buf.get(i..).unwrap_or_else(|| assume_unreachable!())) }
+    }};
+}
+
 fn usize(n: usize, buf: &mut [u8]) -> &str {
     uxx!(n, buf)
 }
 
-impl uDebug for u8 {
+#[cfg(feature = "debug_hex")]
+fn usize_hex(n: usize, buf: &mut [u8], pretty: bool) -> &str {
+    uxx_hex!(n, buf, pretty)
+}
+
+impl uDisplay for u8 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
@@ -38,17 +82,25 @@ impl uDebug for u8 {
     }
 }
 
-impl uDisplay for u8 {
-    #[inline(always)]
+impl uDebug for u8 {
+    #[cfg_attr(not(feature = "debug_hex"), inline(always))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
-        <u8 as uDebug>::fmt(self, f)
+        #[cfg(not(feature = "debug_hex"))]
+        return <u8 as uDisplay>::fmt(self, f);
+
+        #[cfg(feature = "debug_hex")]
+        {
+            let mut buf: [u8; 4] = unsafe { crate::uninitialized() };
+
+            f.write_str(usize_hex(usize::from(*self), &mut buf, f.pretty))
+        }
     }
 }
 
-impl uDebug for u16 {
+impl uDisplay for u16 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
@@ -59,17 +111,25 @@ impl uDebug for u16 {
     }
 }
 
-impl uDisplay for u16 {
-    #[inline(always)]
+impl uDebug for u16 {
+    #[cfg_attr(not(feature = "debug_hex"), inline(always))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
-        <u16 as uDebug>::fmt(self, f)
+        #[cfg(not(feature = "debug_hex"))]
+        return <u16 as uDisplay>::fmt(self, f);
+
+        #[cfg(feature = "debug_hex")]
+        {
+            let mut buf: [u8; 6] = unsafe { crate::uninitialized() };
+
+            f.write_str(usize_hex(usize::from(*self), &mut buf, f.pretty))
+        }
     }
 }
 
-impl uDebug for u32 {
+impl uDisplay for u32 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
@@ -80,17 +140,25 @@ impl uDebug for u32 {
     }
 }
 
-impl uDisplay for u32 {
-    #[inline(always)]
+impl uDebug for u32 {
+    #[cfg_attr(not(feature = "debug_hex"), inline(always))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
-        <u32 as uDebug>::fmt(self, f)
+        #[cfg(not(feature = "debug_hex"))]
+        return <u32 as uDisplay>::fmt(self, f);
+
+        #[cfg(feature = "debug_hex")]
+        {
+            let mut buf: [u8; 10] = unsafe { crate::uninitialized() };
+
+            f.write_str(usize_hex(*self as usize, &mut buf, f.pretty))
+        }
     }
 }
 
-impl uDebug for u64 {
+impl uDisplay for u64 {
     #[cfg(any(target_pointer_width = "32", target_pointer_width = "16"))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
@@ -113,17 +181,35 @@ impl uDebug for u64 {
     }
 }
 
-impl uDisplay for u64 {
-    #[inline(always)]
+impl uDebug for u64 {
+    #[cfg_attr(not(feature = "debug_hex"), inline(always))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
-        <u64 as uDebug>::fmt(self, f)
+        #[cfg(not(feature = "debug_hex"))]
+        return <u64 as uDisplay>::fmt(self, f);
+
+        #[cfg(any(target_pointer_width = "32", target_pointer_width = "16"))]
+        #[cfg(feature = "debug_hex")]
+        {
+            let mut buf: [u8; 18] = unsafe { crate::uninitialized() };
+
+            let s = uxx_hex!(*self, buf, f.pretty);
+            f.write_str(s)
+        }
+
+        #[cfg(target_pointer_width = "64")]
+        #[cfg(feature = "debug_hex")]
+        {
+            let mut buf: [u8; 18] = unsafe { crate::uninitialized() };
+
+            f.write_str(usize_hex(*self as usize, &mut buf, f.pretty))
+        }
     }
 }
 
-impl uDebug for u128 {
+impl uDisplay for u128 {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
@@ -135,13 +221,22 @@ impl uDebug for u128 {
     }
 }
 
-impl uDisplay for u128 {
-    #[inline(always)]
+impl uDebug for u128 {
+    #[cfg_attr(not(feature = "debug_hex"), inline(always))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
-        <u128 as uDebug>::fmt(self, f)
+        #[cfg(not(feature = "debug_hex"))]
+        return <u128 as uDisplay>::fmt(self, f);
+
+        #[cfg(feature = "debug_hex")]
+        {
+            let mut buf: [u8; 34] = unsafe { crate::uninitialized() };
+
+            let s = uxx_hex!(*self, buf, f.pretty);
+            f.write_str(s)
+        }
     }
 }
 

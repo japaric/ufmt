@@ -22,6 +22,9 @@ ufmt-write = { path = "write", version = "0.1.0" }
 # NOTE do NOT turn `std` into a default feature; this is a no-std first crate
 std = ["ufmt-write/std"]
 
+# Integers are printed as hexadecimals with uDebug
+debug_hex = []
+
 [[test]]
 name = "vs-std-write"
 required-features = ["std"]

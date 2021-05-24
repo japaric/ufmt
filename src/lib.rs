@@ -19,6 +19,7 @@
 //! - [`core::fmt::Formatter::debug_struct`][debug_struct]-like API
 //! - [`#[derive(uDebug)]`][derive]
 //! - Pretty formatting (`{:#?}`) for `uDebug`
+//! - `uDebug` integers as hexadecimals using the `hex_debug` feature.
 //!
 //! [`Debug`]: trait.uDebug.html
 //! [`Display`]: trait.uDisplay.html
