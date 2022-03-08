@@ -12,15 +12,18 @@ repository = "https://github.com/japaric/ufmt"
 version = "0.1.0"
 
 [dependencies]
-proc-macro-hack = "0.5.11"
+proc-macro-hack = { version = "0.5.11", optional = true }
 ufmt-macros = { path = "macros", version = "0.1.0" }
 ufmt-write = { path = "write", version = "0.1.0" }
 
 # NOTE do NOT add an `alloc` feature before the alloc crate can be used in
 # no-std BINARIES
 [features]
+default = ["legacy"]
+
 # NOTE do NOT turn `std` into a default feature; this is a no-std first crate
 std = ["ufmt-write/std"]
+legacy = ["proc-macro-hack", "ufmt-macros/proc-macro-hack"]
 
 [[test]]
 name = "vs-std-write"

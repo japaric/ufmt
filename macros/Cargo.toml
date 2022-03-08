@@ -13,7 +13,7 @@ version = "0.1.1"
 proc-macro = true
 
 [dependencies]
-proc-macro-hack = "0.5.11"
+proc-macro-hack = { version = "0.5.11", optional = true }
 proc-macro2 = "1"
 quote = "1"
 
