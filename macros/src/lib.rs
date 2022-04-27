@@ -399,7 +399,7 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
                 if tail.starts_with(DEBUG)
                     || tail.starts_with(DEBUG_PRETTY)
                     || tail.starts_with(DISPLAY)
-                    || tail.starts_with(":")
+                    || tail.starts_with(':')
                 {
                     if buf.is_empty() {
                         if !head.is_empty() {
@@ -422,8 +422,8 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
                         pieces.push(Piece::Debug { pretty: true });
 
                         literal = &tail[DEBUG_PRETTY.len()..];
-                    } else if tail.starts_with(":") {
-                        let (piece, remainder) = parse_colon(&tail[1..], span)?;
+                    } else if let Some(tail2) = tail.strip_prefix(':') {
+                        let (piece, remainder) = parse_colon(tail2, span)?;
                         pieces.push(piece);
                         literal = remainder;
                     } else {
@@ -450,7 +450,7 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
 }
 
 /// given a string src that begins with a text decimal number, return the tail (characters after the number) and the value of the decimal number
-fn split_number<'a>(src: &'a str) -> (&'a str, usize) {
+fn split_number(src: &str) -> (&str, usize) {
     let mut rval = 0;
     let mut cursor = 0;
 
@@ -469,19 +469,19 @@ fn split_number<'a>(src: &'a str) -> (&'a str, usize) {
 }
 
 /// parses the stuff after a `{:` into a [Piece] and the trailing `&str` (what comes after the `}`)
-fn parse_colon<'a>(format: &'a str, span: Span) -> parse::Result<(Piece, &'a str)> {
-    let (format, prefix) = if format.starts_with("#") {
-        (&format[1..], true)
+fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
+    let (format, prefix) = if let Some(tail) = format.strip_prefix('#') {
+        (tail, true)
     } else {
         (format, false)
     };
-    let (format, pad_char) = if format.starts_with("0") {
-        (&format[1..], b'0')
+    let (format, pad_char) = if let Some(tail) = format.strip_prefix('0') {
+        (tail, b'0')
     } else {
         (format, b' ')
     };
-    let (format, pad_length) = if format.len() > 0
-        && if let Some(ch) = format.chars().nth(0) {
+    let (format, pad_length) = if !format.is_empty()
+        && if let Some(ch) = format.chars().next() {
             ch.is_digit(10)
         } else {
             false
@@ -490,7 +490,7 @@ fn parse_colon<'a>(format: &'a str, span: Span) -> parse::Result<(Piece, &'a str
     } else {
         (format, 0)
     };
-    if format.starts_with("x}") {
+    if let Some(tail) = format.strip_prefix("x}") {
         Ok((
             Piece::Hex {
                 upper_case: false,
@@ -498,9 +498,9 @@ fn parse_colon<'a>(format: &'a str, span: Span) -> parse::Result<(Piece, &'a str
                 pad_length,
                 prefix,
             },
-            &format[2..],
+            tail,
         ))
-    } else if format.starts_with("X}") {
+    } else if let Some(tail) = format.strip_prefix("X}") {
         Ok((
             Piece::Hex {
                 upper_case: true,
@@ -508,7 +508,7 @@ fn parse_colon<'a>(format: &'a str, span: Span) -> parse::Result<(Piece, &'a str
                 pad_length,
                 prefix,
             },
-            &format[2..],
+            tail,
         ))
     } else {
         Err(parse::Error::new(
