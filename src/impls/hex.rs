@@ -30,13 +30,14 @@ macro_rules! hex_pattern {
             where
                 W: uWrite + ?Sized,
             {
-                let positive = if *self < 0 {
+                let positive = if false && // the standard rust library doesn't format negative numbers with a minus sign
+                *self < 0 {
                     fmt.write_char('-')?;
-                    -*self
+                    ((!*self) as $utype).wrapping_add(1)
                 } else {
-                    *self
+                    *self as $utype
                 };
-                <$utype as uDisplayHex>::fmt_hex(&(positive as $utype), fmt, options)
+                <$utype as uDisplayHex>::fmt_hex(&positive, fmt, options)
             }
         }
 
@@ -61,6 +62,7 @@ hex_pattern! {i8, u8}
 hex_pattern! {i16, u16}
 hex_pattern! {i32, u32}
 hex_pattern! {i64, u64}
+hex_pattern! {i128, u128}
 hex_pattern! {isize, usize}
 
 fn hex_digit(val: u8, upper_case: bool) -> u8 {
