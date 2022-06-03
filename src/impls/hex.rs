@@ -12,7 +12,7 @@ macro_rules! hex_format {
                 let rem = val & 0xf;
                 cursor -= 1;
                 $buf[cursor] = hex_digit(rem as u8, $options.upper_case);
-                val = val >> 4;
+                val >>= 4;
             }
         }
         unsafe { core::str::from_utf8_unchecked(&$buf[cursor..]) }
