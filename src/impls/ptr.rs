@@ -24,7 +24,7 @@ fn hex(mut n: usize, buf: &mut [u8]) -> usize {
         *buf.get_mut(i)
             .unwrap_or_else(|| unsafe { assume_unreachable!() }) =
             if d < 10 { d + b'0' } else { (d - 10) + b'a' };
-        n = n / 16;
+        n /= 16;
 
         i -= 1;
         if n == 0 {
