@@ -1,0 +1,81 @@
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master, staging, trying]
+
+name: CI
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            toolchain: stable
+            test: true
+            macros_test: true
+
+          - target: i686-unknown-linux-musl
+            toolchain: stable
+            test: true
+
+          # no panics
+          - target: thumbv7m-none-eabi
+            toolchain: stable
+            no_panics: true
+
+          # MSRV
+          - target: x86_64-unknown-linux-gnu
+            toolchain: 1.34.0
+
+          - target: x86_64-unknown-linux-gnu
+            toolchain: 1.36.0
+            only_build_ufmt: true
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up toolchain
+        run: |
+          rustup default ${{ matrix.toolchain }}
+          rustup target add ${{ matrix.target }}
+
+      - name: Build ufmt
+        run: |
+          cargo check -p ufmt --target ${{ matrix.target }}
+
+      - name: Build ufmt-utils
+        if: ${{ matrix.only_build_ufmt }}
+        run: |
+          cargo check -p ufmt-utils --target ${{ matrix.target }}
+
+      - name: Run tests
+        if: ${{ matrix.test }}
+        run: |
+          cargo test --target ${{ matrix.target }} --features std
+
+      - name: Run tests in macros crate
+        if: ${{ matrix.macros_test }}
+        run: |
+          cd macros
+          cargo test
+
+      - name: Check absence of panicking branches
+        if: ${{ matrix.no_panics }}
+        run: |
+          cd nopanic
+          cargo build --examples --release
+          size $(find target/thumbv7m-none-eabi/release/examples -executable -type f ! -name '*-*' | sort)
+
+  ci-success:
+    name: ci
+    if: github.event_name == 'push' && success()
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark the job as a success
+        run: exit 0
