@@ -36,6 +36,8 @@ jobs:
             only_build_ufmt: true
 
     steps:
+      - uses: actions/checkout@v3
+
       - name: Set up toolchain
         run: |
           rustup default ${{ matrix.toolchain }}
