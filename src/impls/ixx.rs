@@ -19,7 +19,7 @@ macro_rules! ixx {
             *$buf
                 .get_mut(i)
                 .unwrap_or_else(|| unsafe { assume_unreachable!() }) = (n % 10) as u8 + b'0';
-            n = n / 10;
+            n /= 10;
 
             if n == 0 {
                 break;
