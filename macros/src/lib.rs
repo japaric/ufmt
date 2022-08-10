@@ -138,15 +138,26 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 })
                 .collect::<Vec<_>>();
 
+            let body = if arms.is_empty() {
+                // Debug's implementation uses `::core::intrinsics::unreachable()`
+                quote!(
+                    unsafe { core::unreachable!() }
+                )
+            } else {
+                quote!(
+                    match self {
+                        #(#arms),*
+                    }
+                )
+            };
+
             quote!(
                 impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
                     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> core::result::Result<(), W::Error>
                         where
                         W: ufmt::uWrite + ?Sized,
                     {
-                        match self {
-                            #(#arms),*
-                        }
+                        #body
                     }
                 }
             )
