@@ -1,8 +1,8 @@
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
   push:
-    branches: [master, staging, trying]
+    branches: [main, staging, trying]
 
 name: CI
 
