@@ -337,3 +337,31 @@ fn dst() {
     let msg = b"The answer is 42";
     assert_eq!(&cursor.buffer[..msg.len()], msg);
 }
+
+#[test]
+fn hex() {
+    cmp!("{:x}", 771u32);
+    cmp!("{:x}", -10000);
+    cmp!("{:4x}", 33);
+    cmp!("{:4x}", 89001);
+    cmp!("{:04x}", 33);
+    cmp!("{:#03x}", 33);
+    cmp!("{:#09x}", 33);
+    cmp!("{:#x}", 71);
+
+    // extreme values
+    cmp!("{:x}", i8::min_value());
+    cmp!("{:x}", i8::max_value());
+    cmp!("{:x}", i16::min_value());
+    cmp!("{:x}", i16::max_value());
+    cmp!("{:x}", i32::min_value());
+    cmp!("{:x}", i32::max_value());
+    cmp!("{:x}", i64::min_value());
+    cmp!("{:x}", i64::max_value());
+    cmp!("{:x}", i128::min_value());
+    cmp!("{:x}", i128::max_value());
+    cmp!("{:x}", isize::min_value());
+    cmp!("{:x}", isize::max_value());
+
+    // <i8 as std::fmt::Display>::fmt(-128)
+}

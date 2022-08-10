@@ -268,6 +268,70 @@ pub trait uDisplay {
         W: uWrite + ?Sized;
 }
 
+/// options for formatting hexadecimal numbers
+pub struct HexOptions {
+    /// when we need to use digits a-f, should they be upper case instead?
+    pub upper_case: bool,
+    /// when we are padding to a target length, what character should we pad using?
+    pub pad_char: u8,
+    /// when we are padding to a target length, how long should our string be?
+    pub pad_length: usize,
+    /// should we include a 0x prefix? (also controlled by upper_case)
+    pub ox_prefix: bool,
+}
+
+impl HexOptions {
+    /// applies the various padding/prefix options while writing the `payload` string
+    pub fn with_stuff<W: uWrite + ?Sized>(
+        &self,
+        fmt: &mut Formatter<'_, W>,
+        payload: &str,
+    ) -> Result<(), <W as uWrite>::Error> {
+        let pad_before = self.ox_prefix && self.pad_char == b' ';
+
+        let pad = self.pad_length as isize
+            - (if self.ox_prefix { 2 } else { 0 } + payload.len()) as isize;
+
+        let do_pad = |fmt: &mut Formatter<'_, W>, pad: isize| -> Result<(), <W as uWrite>::Error> {
+            if pad > 0 {
+                for _ in 0..pad {
+                    fmt.write_char(self.pad_char as char)?;
+                }
+            }
+            Ok(())
+        };
+
+        let do_prefix = |fmt: &mut Formatter<'_, W>,
+                         go: bool,
+                         upper_case: bool|
+         -> Result<(), <W as uWrite>::Error> {
+            if go {
+                fmt.write_str(if upper_case { "0X" } else { "0x" })
+            } else {
+                Ok(())
+            }
+        };
+        if pad_before {
+            do_pad(fmt, pad)?;
+            do_prefix(fmt, self.ox_prefix, self.upper_case)?;
+        } else {
+            do_prefix(fmt, self.ox_prefix, self.upper_case)?;
+            do_pad(fmt, pad)?;
+        }
+
+        fmt.write_str(payload)
+    }
+}
+
+/// just like std::fmt::LowerHex
+#[allow(non_camel_case_types)]
+pub trait uDisplayHex {
+    /// Formats the value using the given formatter
+    fn fmt_hex<W>(&self, _: &mut Formatter<'_, W>, options: HexOptions) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized;
+}
+
 /// Configuration for formatting
 #[allow(non_camel_case_types)]
 pub struct Formatter<'w, W>
