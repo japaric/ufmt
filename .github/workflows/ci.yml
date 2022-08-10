@@ -27,14 +27,6 @@ jobs:
             toolchain: stable
             no_panics: true
 
-          # MSRV
-          - target: x86_64-unknown-linux-gnu
-            toolchain: 1.34.0
-
-          - target: x86_64-unknown-linux-gnu
-            toolchain: 1.36.0
-            only_build_ufmt: true
-
     steps:
       - uses: actions/checkout@v3
 
