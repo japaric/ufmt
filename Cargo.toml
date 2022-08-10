@@ -9,11 +9,11 @@ license = "MIT OR Apache-2.0"
 name = "ufmt"
 readme = "README.md"
 repository = "https://github.com/japaric/ufmt"
-version = "0.1.0"
+version = "0.2.0"
 
 [dependencies]
 proc-macro-hack = "0.5.11"
-ufmt-macros = { path = "macros", version = "0.1.0" }
+ufmt-macros = { path = "macros", version = "0.3.0" }
 ufmt-write = { path = "write", version = "0.1.0" }
 
 # NOTE do NOT add an `alloc` feature before the alloc crate can be used in

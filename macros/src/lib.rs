@@ -139,15 +139,26 @@ pub fn debug(input: TokenStream) -> TokenStream {
                 })
                 .collect::<Vec<_>>();
 
+            let body = if arms.is_empty() {
+                // Debug's implementation uses `::core::intrinsics::unreachable()`
+                quote!(
+                    unsafe { core::unreachable!() }
+                )
+            } else {
+                quote!(
+                    match self {
+                        #(#arms),*
+                    }
+                )
+            };
+
             quote!(
                 impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
                     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> core::result::Result<(), W::Error>
                         where
                         W: ufmt::uWrite + ?Sized,
                     {
-                        match self {
-                            #(#arms),*
-                        }
+                        #body
                     }
                 }
             )
@@ -242,8 +253,19 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
                         quote!(ufmt::uDebug::fmt(#pat, f)?;)
                     });
                 }
-
-                _ => unreachable!(),
+                Piece::Hex {
+                    upper_case,
+                    pad_char,
+                    pad_length,
+                    prefix,
+                } => {
+                    exprs.push(quote!(ufmt::uDisplayHex::fmt_hex(#pat, f, ufmt::HexOptions{
+                        upper_case:#upper_case,
+                        pad_char: #pad_char,
+                        pad_length: #pad_length,
+                        ox_prefix: #prefix})?;));
+                }
+                Piece::Str(_) => unreachable!(),
             }
         }
     }
@@ -297,9 +319,17 @@ impl Parse for Input {
 
 #[derive(Debug, PartialEq)]
 enum Piece<'a> {
-    Debug { pretty: bool },
+    Debug {
+        pretty: bool,
+    },
     Display,
     Str(Cow<'a, str>),
+    Hex {
+        upper_case: bool,
+        pad_char: u8,
+        pad_length: usize,
+        prefix: bool,
+    },
 }
 
 impl Piece<'_> {
@@ -382,6 +412,7 @@ fn parse(mut literal: &str, span: Span) -> parse::Result<Vec<Piece>> {
                 if tail.starts_with(DEBUG)
                     || tail.starts_with(DEBUG_PRETTY)
                     || tail.starts_with(DISPLAY)
+                    || tail.starts_with(':')
                 {
                     if buf.is_empty() {
                         if !head.is_empty() {
@@ -401,6 +432,10 @@ fn parse(mut literal: &str, span: Span) -> parse::Result<Vec<Piece>> {
                         pieces.push(Piece::Debug { pretty: true });
 
                         literal = tail_tail;
+                    } else if let Some(tail2) = tail.strip_prefix(':') {
+                        let (piece, remainder) = parse_colon(tail2, span)?;
+                        pieces.push(piece);
+                        literal = remainder;
                     } else {
                         pieces.push(Piece::Display);
 
@@ -422,6 +457,75 @@ fn parse(mut literal: &str, span: Span) -> parse::Result<Vec<Piece>> {
     }
 
     Ok(pieces)
+}
+
+/// given a string src that begins with a text decimal number, return the tail (characters after the number) and the value of the decimal number
+fn split_number(src: &str) -> (&str, usize) {
+    let mut rval = 0;
+    let mut cursor = 0;
+
+    let chars = src.chars();
+    for (i, ch) in chars.enumerate() {
+        match ch.to_digit(10) {
+            Some(val) => {
+                rval = rval * 10 + val as usize;
+                cursor = i + 1;
+            }
+            None => break,
+        }
+    }
+
+    (&src[cursor..], rval)
+}
+
+/// parses the stuff after a `{:` into a [Piece] and the trailing `&str` (what comes after the `}`)
+fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
+    let (format, prefix) = if let Some(tail) = format.strip_prefix('#') {
+        (tail, true)
+    } else {
+        (format, false)
+    };
+    let (format, pad_char) = if let Some(tail) = format.strip_prefix('0') {
+        (tail, b'0')
+    } else {
+        (format, b' ')
+    };
+    let (format, pad_length) = if !format.is_empty()
+        && if let Some(ch) = format.chars().next() {
+            ch.is_digit(10)
+        } else {
+            false
+        } {
+        split_number(format)
+    } else {
+        (format, 0)
+    };
+    if let Some(tail) = format.strip_prefix("x}") {
+        Ok((
+            Piece::Hex {
+                upper_case: false,
+                pad_char,
+                pad_length,
+                prefix,
+            },
+            tail,
+        ))
+    } else if let Some(tail) = format.strip_prefix("X}") {
+        Ok((
+            Piece::Hex {
+                upper_case: true,
+                pad_char,
+                pad_length,
+                prefix,
+            },
+            tail,
+        ))
+    } else {
+        Err(parse::Error::new(
+            span,
+            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}` or '{:x}'",
+        ))
+    }
 }
 
 #[cfg(test)]
@@ -455,6 +559,46 @@ mod tests {
             Some(vec![Piece::Debug { pretty: true }]),
         );
 
+        assert_eq!(
+            super::parse("{:x}", span).ok(),
+            Some(vec![Piece::Hex {
+                upper_case: false,
+                pad_char: b' ',
+                pad_length: 0,
+                prefix: false
+            }]),
+        );
+
+        assert_eq!(
+            super::parse("{:9x}", span).ok(),
+            Some(vec![Piece::Hex {
+                upper_case: false,
+                pad_char: b' ',
+                pad_length: 9,
+                prefix: false
+            }]),
+        );
+
+        assert_eq!(
+            super::parse("{:9X}", span).ok(),
+            Some(vec![Piece::Hex {
+                upper_case: true,
+                pad_char: b' ',
+                pad_length: 9,
+                prefix: false
+            }]),
+        );
+
+        assert_eq!(
+            super::parse("{:#X}", span).ok(),
+            Some(vec![Piece::Hex {
+                upper_case: true,
+                pad_char: b' ',
+                pad_length: 0,
+                prefix: true
+            }]),
+        );
+
         // escaped braces
         assert_eq!(
             super::parse("{{}} is not an argument", span).ok(),
@@ -466,7 +610,7 @@ mod tests {
         assert!(super::parse(" {", span).is_err());
         assert!(super::parse("{ ", span).is_err());
         assert!(super::parse("{ {", span).is_err());
-        assert!(super::parse("{:x}", span).is_err());
+        assert!(super::parse("{:q}", span).is_err());
     }
 
     #[test]
@@ -488,5 +632,12 @@ mod tests {
         // escaped right brace
         assert_eq!(super::unescape("}}", span).ok(), Some(Cow::Borrowed("}")));
         assert_eq!(super::unescape("}} ", span).ok(), Some(Cow::Borrowed("} ")));
+    }
+
+    #[test]
+    fn split_number() {
+        let (a, b) = crate::split_number("42 card pickup");
+        assert_eq!(" card pickup", a);
+        assert_eq!(42, b);
     }
 }

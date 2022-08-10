@@ -19,6 +19,7 @@
 //! - [`core::fmt::Formatter::debug_struct`][debug_struct]-like API
 //! - [`#[derive(uDebug)]`][derive]
 //! - Pretty formatting (`{:#?}`) for `uDebug`
+//! - Hexadecimal formatting (`{:x}`) of integer primitives (e.g. `i32`) -- currently cannot be extended to other types
 //!
 //! [`Debug`]: trait.uDebug.html
 //! [`Display`]: trait.uDisplay.html
@@ -50,6 +51,19 @@
 //! let pair = Pair { x: 1, y: 2 };
 //! uwrite!(s, "{:?}", pair).unwrap();
 //! assert_eq!(s, "Pair { x: 1, y: 2 }");
+//! ```
+//!
+//! - Hexadecimal formatting
+//!
+//! Lowercase (`{:x}`), uppercase (`{:X}`), `0x`-prefix (`{:#x}`) and padding (`{:02x}`) are
+//! supported on primitive integer types. 
+//!
+//! ```
+//! use ufmt::uwrite;
+//!
+//! let mut s = String::new();
+//! uwrite!(s, "{:#06x}", 0x42);
+//! assert_eq!(s, "0x0042");
 //! ```
 //!
 //! - implementing `uWrite`
@@ -187,8 +201,11 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is guaranteed to compile on stable Rust 1.34 and up. It *might* compile on older
-//! versions but that may change in any new patch release.
+//! This crate does *not* have a Minimum Supported Rust Version (MSRV) and may make use of language
+//! features and API in the standard library available in the latest stable Rust version.
+//!
+//! In other words, changes in the Rust version requirement of this crate are not considered semver
+//! breaking change and may occur in patch version release.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
@@ -264,6 +281,76 @@ pub trait uDebug {
 pub trait uDisplay {
     /// Formats the value using the given formatter
     fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized;
+}
+
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+// options for formatting hexadecimal numbers
+#[doc(hidden)]
+pub struct HexOptions {
+    /// when we need to use digits a-f, should they be upper case instead?
+    pub upper_case: bool,
+    /// when we are padding to a target length, what character should we pad using?
+    pub pad_char: u8,
+    /// when we are padding to a target length, how long should our string be?
+    pub pad_length: usize,
+    /// should we include a 0x prefix? (also controlled by upper_case)
+    pub ox_prefix: bool,
+}
+
+impl HexOptions {
+    /// applies the various padding/prefix options while writing the `payload` string
+    pub fn with_stuff<W: uWrite + ?Sized>(
+        &self,
+        fmt: &mut Formatter<'_, W>,
+        payload: &str,
+    ) -> Result<(), <W as uWrite>::Error> {
+        let pad_before = self.ox_prefix && self.pad_char == b' ';
+
+        let pad = self.pad_length as isize
+            - (if self.ox_prefix { 2 } else { 0 } + payload.len()) as isize;
+
+        let do_pad = |fmt: &mut Formatter<'_, W>, pad: isize| -> Result<(), <W as uWrite>::Error> {
+            if pad > 0 {
+                for _ in 0..pad {
+                    fmt.write_char(self.pad_char as char)?;
+                }
+            }
+            Ok(())
+        };
+
+        let do_prefix = |fmt: &mut Formatter<'_, W>,
+                         go: bool,
+                         upper_case: bool|
+         -> Result<(), <W as uWrite>::Error> {
+            if go {
+                fmt.write_str(if upper_case { "0X" } else { "0x" })
+            } else {
+                Ok(())
+            }
+        };
+        if pad_before {
+            do_pad(fmt, pad)?;
+            do_prefix(fmt, self.ox_prefix, self.upper_case)?;
+        } else {
+            do_prefix(fmt, self.ox_prefix, self.upper_case)?;
+            do_pad(fmt, pad)?;
+        }
+
+        fmt.write_str(payload)
+    }
+}
+
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+// just like std::fmt::LowerHex
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+pub trait uDisplayHex {
+    /// Formats the value using the given formatter
+    fn fmt_hex<W>(&self, _: &mut Formatter<'_, W>, options: HexOptions) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized;
 }

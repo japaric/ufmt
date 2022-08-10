@@ -86,6 +86,7 @@ impl uDisplay for i16 {
 }
 
 impl uDebug for i32 {
+    #[cfg(not(target_pointer_width = "16"))]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
@@ -93,6 +94,16 @@ impl uDebug for i32 {
         let mut buf: [u8; 11] = unsafe { crate::uninitialized() };
 
         f.write_str(isize(*self as isize, &mut buf))
+    }
+    #[cfg(target_pointer_width = "16")]
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized,
+    {
+        let mut buf: [u8; 11] = unsafe { crate::uninitialized() };
+
+        let s = ixx!(u32, *self, buf);
+        f.write_str(s)
     }
 }
 
