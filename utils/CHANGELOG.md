@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- [breaking-change] Minimum Supported Rust Version (MSRV) guarantee has been removed
 - [breaking-change] the capacity type parameter `N` of `LineBuffered` is now a constant, rather than a type
 
 ### Removed
