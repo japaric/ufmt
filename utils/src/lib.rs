@@ -13,10 +13,8 @@
 
 use core::{convert::Infallible, str, fmt};
 
-pub use heapless::consts;
-use heapless::{ArrayLength, String};
+use heapless::String;
 use ufmt_write::uWrite;
-
 
 macro_rules! assume_unreachable {
     () => {
@@ -64,18 +62,16 @@ where
 }
 
 /// A write adapter that buffers writes and automatically flushes on newlines
-pub struct LineBuffered<W, N>
+pub struct LineBuffered<W, const N: usize>
 where
-    N: ArrayLength<u8>,
     W: uWrite,
 {
     buffer: String<N>,
     writer: W,
 }
 
-impl<W, N> LineBuffered<W, N>
+impl<W, const N: usize> LineBuffered<W, N>
 where
-    N: ArrayLength<u8>,
     W: uWrite,
 {
     /// Creates a new `LineBuffered` adapter
@@ -116,9 +112,8 @@ where
     }
 }
 
-impl<W, N> uWrite for LineBuffered<W, N>
+impl<W, const N: usize> uWrite for LineBuffered<W, N>
 where
-    N: ArrayLength<u8>,
     W: uWrite,
 {
     type Error = W::Error;

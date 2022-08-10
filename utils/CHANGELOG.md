@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- [breaking-change] the capacity type parameter `N` of `LineBuffered` is now a constant, rather than a type
+
 ## [v0.1.1] - 2020-02-11
 
 ### Added
