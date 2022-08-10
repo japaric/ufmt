@@ -489,7 +489,7 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
     };
     let (format, pad_length) = if !format.is_empty()
         && if let Some(ch) = format.chars().next() {
-            ch.is_digit(10)
+            ch.is_ascii_digit()
         } else {
             false
         } {
