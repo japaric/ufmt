@@ -56,7 +56,7 @@
 //! - Hexadecimal formatting
 //!
 //! Lowercase (`{:x}`), uppercase (`{:X}`), `0x`-prefix (`{:#x}`) and padding (`{:02x}`) are
-//! supported on primitive integer types. 
+//! supported on primitive integer types.
 //!
 //! ```
 //! use ufmt::uwrite;

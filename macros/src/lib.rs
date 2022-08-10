@@ -140,9 +140,7 @@ pub fn debug(input: TokenStream) -> TokenStream {
 
             let body = if arms.is_empty() {
                 // Debug's implementation uses `::core::intrinsics::unreachable()`
-                quote!(
-                    unsafe { core::unreachable!() }
-                )
+                quote!(unsafe { core::unreachable!() })
             } else {
                 quote!(
                     match self {
@@ -275,7 +273,7 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
 
             (#formatter).do_as_formatter(|f| {
                 #(#exprs)*
-                Ok(())
+                core::result::Result::Ok(())
             })
         }
     })
