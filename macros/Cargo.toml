@@ -2,7 +2,7 @@
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 categories = ["embedded", "no-std"]
 description = "`μfmt` macros"
-edition = "2018"
+edition = "2021"
 keywords = ["Debug", "Display", "Write", "format"]
 license = "MIT OR Apache-2.0"
 name = "ufmt-macros"

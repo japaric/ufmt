@@ -298,7 +298,6 @@ fn static_lifetime(x: &'static mut u32) {
 // test dynamically sized writer
 #[test]
 fn dst() {
-    #[allow(rust_2018_idioms)] // false positive?
     struct Cursor<B>
     where
         B: ?Sized,
