@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Changed
+
+- [breaking-change] Minimum Supported Rust Version (MSRV) guarantee has been removed
+
 ## [v0.2.0] - 2022-08-10
 
 ### Added
