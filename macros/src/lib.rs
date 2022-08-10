@@ -10,7 +10,6 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 
 use proc_macro2::{Literal, Span};
-use proc_macro_hack::proc_macro_hack;
 use quote::quote;
 use syn::{
     parse::{self, Parse, ParseStream},
@@ -174,12 +173,12 @@ pub fn debug(input: TokenStream) -> TokenStream {
     ts.into()
 }
 
-#[proc_macro_hack]
+#[proc_macro]
 pub fn uwrite(input: TokenStream) -> TokenStream {
     write(input, false)
 }
 
-#[proc_macro_hack]
+#[proc_macro]
 pub fn uwriteln(input: TokenStream) -> TokenStream {
     write(input, true)
 }

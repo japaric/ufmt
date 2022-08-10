@@ -90,13 +90,6 @@
 //!
 //! - writing a `macro_rules!` macro that uses `uwrite!` (or `uwriteln!`).
 //!
-//! Both `ufmt` macros are implemented using [`proc-macro-hack`]; care is needed to avoid running
-//! into the compiler bug [#43081](https://github.com/rust-lang/rust/issues/43081). See also
-//! [dtolnay/proc-macro-hack#46][pmh-46].
-//!
-//! [`proc-macro-hack`]: https://github.com/dtolnay/proc-macro-hack
-//! [pmh-46]: https://github.com/dtolnay/proc-macro-hack/issues/46
-//!
 //! ```
 //! // like `std::format!` it returns a `std::String` but uses `uwrite!` instead of `write!`
 //! macro_rules! uformat {
@@ -220,7 +213,6 @@ extern crate self as ufmt;
 
 use core::str;
 
-use proc_macro_hack::proc_macro_hack;
 pub use ufmt_write::uWrite;
 
 /// Write formatted data into a buffer
@@ -241,13 +233,11 @@ pub use ufmt_write::uWrite;
 /// Named parameters and "specified" positional parameters (`{0}`) are not supported.
 ///
 /// `{{` and `}}` can be used to escape braces.
-#[proc_macro_hack]
 pub use ufmt_macros::uwrite;
 
 /// Write formatted data into a buffer, with a newline appended
 ///
 /// See [`uwrite!`](macro.uwrite.html) for more details
-#[proc_macro_hack]
 pub use ufmt_macros::uwriteln;
 
 pub use crate::helpers::{DebugList, DebugMap, DebugStruct, DebugTuple};
