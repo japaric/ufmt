@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.1.2] - 2022-08-10
+
+## Added
+
+- added support for hexadecimal formatting of integers using the `{:x}` format string
+
 ## [v0.1.1] - 2022-08-09
 
 ### Fixed
@@ -18,5 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/japaric/ufmt/compare/ufmt-v0.1.1...HEAD
+[Unreleased]: https://github.com/japaric/ufmt/compare/ufmt-v0.1.2...HEAD
+[v0.1.2]: https://github.com/japaric/ufmt/compare/ufmt-v0.1.1...ufmt-v0.1.2
 [v0.1.1]: https://github.com/japaric/ufmt/compare/ufmt-v0.1.0...ufmt-v0.1.1

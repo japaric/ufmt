@@ -19,6 +19,7 @@
 //! - [`core::fmt::Formatter::debug_struct`][debug_struct]-like API
 //! - [`#[derive(uDebug)]`][derive]
 //! - Pretty formatting (`{:#?}`) for `uDebug`
+//! - Hexadecimal formatting (`{:x}`) of integer primitives (e.g. `i32`) -- currently cannot be extended to other types
 //!
 //! [`Debug`]: trait.uDebug.html
 //! [`Display`]: trait.uDisplay.html
@@ -50,6 +51,19 @@
 //! let pair = Pair { x: 1, y: 2 };
 //! uwrite!(s, "{:?}", pair).unwrap();
 //! assert_eq!(s, "Pair { x: 1, y: 2 }");
+//! ```
+//!
+//! - Hexadecimal formatting
+//!
+//! Lowercase (`{:x}`), uppercase (`{:X}`), `0x`-prefix (`{:#x}`) and padding (`{:02x}`) are
+//! supported on primitive integer types. 
+//!
+//! ```
+//! use ufmt::uwrite;
+//!
+//! let mut s = String::new();
+//! uwrite!(s, "{:#06x}", 0x42);
+//! assert_eq!(s, "0x0042");
 //! ```
 //!
 //! - implementing `uWrite`
@@ -268,7 +282,10 @@ pub trait uDisplay {
         W: uWrite + ?Sized;
 }
 
-/// options for formatting hexadecimal numbers
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+// options for formatting hexadecimal numbers
+#[doc(hidden)]
 pub struct HexOptions {
     /// when we need to use digits a-f, should they be upper case instead?
     pub upper_case: bool,
@@ -323,7 +340,10 @@ impl HexOptions {
     }
 }
 
-/// just like std::fmt::LowerHex
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+// just like std::fmt::LowerHex
+#[doc(hidden)]
 #[allow(non_camel_case_types)]
 pub trait uDisplayHex {
     /// Formats the value using the given formatter
