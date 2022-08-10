@@ -6,7 +6,7 @@ use core::sync::atomic::{AtomicI16, AtomicI8, Ordering};
 use common::W;
 use cortex_m_rt::{entry, exception};
 use ufmt::uwriteln;
-use ufmt_utils::{consts, LineBuffered};
+use ufmt_utils::LineBuffered;
 
 static A: AtomicI8 = AtomicI8::new(0);
 static B: AtomicI16 = AtomicI16::new(0);
@@ -21,7 +21,7 @@ fn main() -> ! {
 
 #[exception]
 fn PendSV() {
-    let mut w = LineBuffered::<_, consts::U64>::new(W);
+    let mut w = LineBuffered::<_, 64>::new(W);
     let a = A.load(Ordering::Relaxed);
     let b = B.load(Ordering::Relaxed);
 
