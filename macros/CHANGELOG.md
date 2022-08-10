@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.2.0] - 2022-08-10
+
+### Added
+
+- added support for `{:x}`-style formatting arguments. must be used with `ufmt` 0.1.2+
+
 ## [v0.1.2] - 2022-08-09
 
 ### Fixed
@@ -23,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/japaric/ufmt/compare/ufmt-macros-v0.1.2...HEAD
+[Unreleased]: https://github.com/japaric/ufmt/compare/ufmt-macros-v0.2.0...HEAD
+[v0.2.0]: https://github.com/japaric/ufmt/compare/ufmt-macros-v0.1.2...ufmt-macros-v0.2.0
 [v0.1.2]: https://github.com/japaric/ufmt/compare/ufmt-macros-v0.1.1...ufmt-macros-v0.1.2
 [v0.1.1]: https://github.com/japaric/ufmt/compare/ufmt-macros-v0.1.0...ufmt-macros-v0.1.1
