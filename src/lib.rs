@@ -295,7 +295,9 @@ impl HexOptions {
         let do_pad = |fmt: &mut Formatter<'_, W>, pad: isize| -> Result<(), <W as uWrite>::Error> {
             if pad > 0 {
                 for _ in 0..pad {
-                    fmt.write_char(self.pad_char as char)?;
+                    // miri considers the `write_char` defined in `ufmt-write` v0.1.0 unsound
+                    // to workaround the issue we use `write_str` instead of `write_char`
+                    fmt.write_str(unsafe { str::from_utf8_unchecked(&[self.pad_char]) })?;
                 }
             }
             Ok(())
