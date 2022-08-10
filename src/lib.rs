@@ -240,19 +240,11 @@ pub use ufmt_macros::uwriteln;
 
 pub use crate::helpers::{DebugList, DebugMap, DebugStruct, DebugTuple};
 
-#[macro_use]
-mod macros;
-
 mod helpers;
 mod impls;
 /// Derive macros
 pub mod derive {
     pub use ufmt_macros::uDebug;
-}
-
-#[allow(deprecated)]
-unsafe fn uninitialized<T>() -> T {
-    core::mem::uninitialized()
 }
 
 /// Just like `core::fmt::Debug`

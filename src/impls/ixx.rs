@@ -1,9 +1,11 @@
-use core::str;
+use core::{mem::MaybeUninit, slice, str};
 
 use crate::{uDebug, uDisplay, uWrite, Formatter};
 
 macro_rules! ixx {
     ($uxx:ty, $n:expr, $buf:expr) => {{
+        let ptr = $buf.as_mut_ptr().cast::<u8>();
+        let len = $buf.len();
         let n = $n;
         let negative = n.is_negative();
         let mut n = if negative {
@@ -14,11 +16,9 @@ macro_rules! ixx {
         } else {
             n as $uxx
         };
-        let mut i = $buf.len() - 1;
+        let mut i = len - 1;
         loop {
-            *$buf
-                .get_mut(i)
-                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = (n % 10) as u8 + b'0';
+            unsafe { ptr.add(i).write((n % 10) as u8 + b'0') }
             n /= 10;
 
             if n == 0 {
@@ -30,16 +30,14 @@ macro_rules! ixx {
 
         if negative {
             i -= 1;
-            *$buf
-                .get_mut(i)
-                .unwrap_or_else(|| unsafe { assume_unreachable!() }) = b'-';
+            unsafe { ptr.add(i).write(b'-') }
         }
 
-        unsafe { str::from_utf8_unchecked($buf.get(i..).unwrap_or_else(|| assume_unreachable!())) }
+        unsafe { str::from_utf8_unchecked(slice::from_raw_parts(ptr.add(i), len - i)) }
     }};
 }
 
-fn isize(n: isize, buf: &mut [u8]) -> &str {
+fn isize(n: isize, buf: &mut [MaybeUninit<u8>]) -> &str {
     ixx!(usize, n, buf)
 }
 
@@ -48,7 +46,7 @@ impl uDebug for i8 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 4] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::uninit(); 4];
 
         f.write_str(isize(isize::from(*self), &mut buf))
     }
@@ -69,7 +67,7 @@ impl uDebug for i16 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 6] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::uninit(); 6];
 
         f.write_str(isize(isize::from(*self), &mut buf))
     }
@@ -91,16 +89,17 @@ impl uDebug for i32 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 11] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::uninit(); 11];
 
         f.write_str(isize(*self as isize, &mut buf))
     }
+
     #[cfg(target_pointer_width = "16")]
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 11] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::<u8>::uninit(); 11];
 
         let s = ixx!(u32, *self, buf);
         f.write_str(s)
@@ -123,7 +122,7 @@ impl uDebug for i64 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 20] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::<u8>::uninit(); 20];
 
         let s = ixx!(u64, *self, buf);
         f.write_str(s)
@@ -134,7 +133,7 @@ impl uDebug for i64 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 20] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::uninit(); 20];
 
         f.write_str(isize(*self as isize, &mut buf))
     }
@@ -155,7 +154,7 @@ impl uDebug for i128 {
     where
         W: uWrite + ?Sized,
     {
-        let mut buf: [u8; 40] = unsafe { crate::uninitialized() };
+        let mut buf = [MaybeUninit::<u8>::uninit(); 40];
 
         let s = ixx!(u128, *self, buf);
         f.write_str(s)
