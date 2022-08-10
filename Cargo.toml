@@ -12,7 +12,6 @@ repository = "https://github.com/japaric/ufmt"
 version = "0.2.0"
 
 [dependencies]
-proc-macro-hack = "0.5.11"
 ufmt-macros = { path = "macros", version = "0.3.0" }
 ufmt-write = { path = "write", version = "0.1.0" }
 
