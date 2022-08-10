@@ -433,7 +433,7 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
                         pieces.push(Piece::Debug { pretty: true });
 
                         literal = &tail[DEBUG_PRETTY.len()..];
-                    } else if let Some(tail2) = strip_prefix(tail, ":") {
+                    } else if let Some(tail2) = tail.strip_prefix(':') {
                         let (piece, remainder) = parse_colon(tail2, span)?;
                         pieces.push(piece);
                         literal = remainder;
@@ -481,12 +481,12 @@ fn split_number(src: &str) -> (&str, usize) {
 
 /// parses the stuff after a `{:` into a [Piece] and the trailing `&str` (what comes after the `}`)
 fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
-    let (format, prefix) = if let Some(tail) = strip_prefix(format, "#") {
+    let (format, prefix) = if let Some(tail) = format.strip_prefix('#') {
         (tail, true)
     } else {
         (format, false)
     };
-    let (format, pad_char) = if let Some(tail) = strip_prefix(format, "0") {
+    let (format, pad_char) = if let Some(tail) = format.strip_prefix('0') {
         (tail, b'0')
     } else {
         (format, b' ')
@@ -501,7 +501,7 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
     } else {
         (format, 0)
     };
-    if let Some(tail) = strip_prefix(format, "x}") {
+    if let Some(tail) = format.strip_prefix("x}") {
         Ok((
             Piece::Hex {
                 upper_case: false,
@@ -511,7 +511,7 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
             },
             tail,
         ))
-    } else if let Some(tail) = strip_prefix(format, "X}") {
+    } else if let Some(tail) = format.strip_prefix("X}") {
         Ok((
             Piece::Hex {
                 upper_case: true,
@@ -526,15 +526,6 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
             span,
             "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}` or '{:x}'",
         ))
-    }
-}
-
-// `str::strip_prefix` polyfill for Rust 1.44-
-fn strip_prefix<'h>(haystack: &'h str, prefix: &str) -> Option<&'h str> {
-    if haystack.starts_with(prefix) {
-        Some(&haystack[prefix.len()..])
-    } else {
-        None
     }
 }
 
