@@ -62,11 +62,27 @@ jobs:
           cargo build --target ${{ matrix.target }} --examples --release
           size $(find target/${{ matrix.target }}/release/examples -executable -type f ! -name '*-*' | sort)
 
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run clippy (workspace)
+        run: |
+          cargo clippy
+
+      - name: Run clippy (nopanic)
+        run: |
+          cd nopanic
+          cargo clippy
+
   ci-success:
     name: ci
     if: github.event_name == 'push' && success()
     needs:
       - test
+      - clippy
     runs-on: ubuntu-latest
     steps:
       - name: Mark the job as a success
