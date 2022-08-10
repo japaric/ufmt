@@ -70,6 +70,7 @@ jobs:
       - name: Run tests within miri
         if: ${{ matrix.miri }}
         run: |
+          rustup component add miri
           cargo miri test --features std
 
   clippy:
