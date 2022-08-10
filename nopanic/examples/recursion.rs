@@ -1,13 +1,9 @@
 #![no_main]
 #![no_std]
 
-use core::sync::atomic::{AtomicU32, Ordering};
-
-use common::W;
-use cortex_m_rt::{entry, exception};
 use ufmt::{derive::uDebug, uwrite};
 
-static X: AtomicU32 = AtomicU32::new(0);
+use common::W;
 
 #[derive(uDebug)]
 struct Node {
@@ -15,21 +11,12 @@ struct Node {
     next: Option<&'static Node>,
 }
 
-#[entry]
-fn main() -> ! {
-    loop {
-        X.fetch_add(1, Ordering::Relaxed);
-    }
-}
-
-#[exception]
-fn PendSV() {
+#[no_mangle]
+fn _start(x: u32) {
     static TAIL: Node = Node {
         value: 0,
         next: None,
     };
-
-    let x = X.load(Ordering::Relaxed);
 
     uwrite!(
         &mut W,
