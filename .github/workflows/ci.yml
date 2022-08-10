@@ -59,8 +59,8 @@ jobs:
         if: ${{ matrix.no_panics }}
         run: |
           cd nopanic
-          cargo build --examples --release
-          size $(find target/thumbv7m-none-eabi/release/examples -executable -type f ! -name '*-*' | sort)
+          cargo build --target ${{ matrix.target }} --examples --release
+          size $(find target/${{ matrix.target }}/release/examples -executable -type f ! -name '*-*' | sort)
 
   ci-success:
     name: ci

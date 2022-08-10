@@ -1,30 +1,12 @@
 #![no_main]
 #![no_std]
 
-use common::W;
-use cortex_m::interrupt;
-use cortex_m_rt::{entry, exception};
-use heapless::{consts::*, i, Vec};
 use ufmt::uwrite;
 
-static mut A: Vec<i8, U32> = Vec(i::Vec::new());
+use common::W;
 
-#[entry]
-fn main() -> ! {
-    let mut x = 0;
-    loop {
-        interrupt::free(|_| unsafe {
-            A.push(x).ok();
-        });
-        x += 1;
-    }
-}
-
-#[exception]
-fn PendSV() {
-    unsafe {
-        let a: &[i8] = &A;
-        uwrite!(&mut W, "{:?}", a).unwrap();
-        uwrite!(&mut W, "{:#?}", a).unwrap();
-    }
+#[no_mangle]
+fn _start(a: &[i8]) {
+    uwrite!(&mut W, "{:?}", a).unwrap();
+    uwrite!(&mut W, "{:#?}", a).unwrap();
 }
