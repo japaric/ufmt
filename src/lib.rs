@@ -201,8 +201,11 @@
 //!
 //! # Minimum Supported Rust Version (MSRV)
 //!
-//! This crate is guaranteed to compile on stable Rust 1.34 and up. It *might* compile on older
-//! versions but that may change in any new patch release.
+//! This crate does *not* have a Minimum Supported Rust Version (MSRV) and may make use of language
+//! features and API in the standard library available in the latest stable Rust version.
+//!
+//! In other words, changes in the Rust version requirement of this crate are not considered semver
+//! breaking change and may occur in patch version release.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
