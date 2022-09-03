@@ -79,9 +79,9 @@ pub fn debug(input: TokenStream) -> TokenStream {
 
             quote!(
                 impl #impl_generics ufmt::uDebug for #ident #ty_generics #where_clause {
-                    fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> core::result::Result<(), W::Error>
+                    fn fmt<WriterUfmt>(&self, f: &mut ufmt::Formatter<'_, WriterUfmt>) -> core::result::Result<(), WriterUfmt::Error>
                     where
-                        W: ufmt::uWrite + ?Sized,
+                        WriterUfmt: ufmt::uWrite + ?Sized,
                     {
                         #body
                     }

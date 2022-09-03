@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Fixed
+
+- fixed `uDebug` derive for types with a `W` generic
+
 ## [v0.2.0] - 2022-08-10
 
 ## Changed
