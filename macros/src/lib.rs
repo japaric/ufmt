@@ -262,6 +262,18 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
                         pad_length: #pad_length,
                         ox_prefix: #prefix})?;));
                 }
+                Piece::Bin {
+                    upper_case,
+                    pad_char,
+                    pad_length,
+                    prefix,
+                } => {
+                    exprs.push(quote!(ufmt::uDisplayBin::fmt_bin(#pat, f, ufmt::BinOptions{
+                        upper_case:#upper_case,
+                        pad_char: #pad_char,
+                        pad_length: #pad_length,
+                        ob_prefix: #prefix})?;));
+                }
                 Piece::Str(_) => unreachable!(),
             }
         }
@@ -322,6 +334,12 @@ enum Piece<'a> {
     Display,
     Str(Cow<'a, str>),
     Hex {
+        upper_case: bool,
+        pad_char: u8,
+        pad_length: usize,
+        prefix: bool,
+    },
+    Bin {
         upper_case: bool,
         pad_char: u8,
         pad_length: usize,
@@ -517,10 +535,30 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
             },
             tail,
         ))
+    } else if let Some(tail) = format.strip_prefix("b}") {
+        Ok((
+            Piece::Bin {
+                upper_case: false,
+                pad_char,
+                pad_length,
+                prefix,
+            },
+            tail,
+        ))
+    } else if let Some(tail) = format.strip_prefix("B}") {
+        Ok((
+            Piece::Bin {
+                upper_case: true,
+                pad_char,
+                pad_length,
+                prefix,
+            },
+            tail,
+        ))
     } else {
         Err(parse::Error::new(
             span,
-            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}` or '{:x}'",
+            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}`, '{:x}' or {:b}",
         ))
     }
 }
@@ -559,6 +597,16 @@ mod tests {
         assert_eq!(
             super::parse("{:x}", span).ok(),
             Some(vec![Piece::Hex {
+                upper_case: false,
+                pad_char: b' ',
+                pad_length: 0,
+                prefix: false
+            }]),
+        );
+
+        assert_eq!(
+            super::parse("{:b}", span).ok(),
+            Some(vec![Piece::Bin {
                 upper_case: false,
                 pad_char: b' ',
                 pad_length: 0,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- added support for `{:b}`-style formatting arguments. must be used with `ufmt` 0.1.2+
+
 ## [v0.3.0] - 2022-08-10
 
 ## Changed
