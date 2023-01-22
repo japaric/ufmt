@@ -337,6 +337,78 @@ pub trait uDisplayHex {
         W: uWrite + ?Sized;
 }
 
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+// options for formatting binary numbers
+#[doc(hidden)]
+pub struct BinOptions {
+    /// does not apply to digits, but to the 0b prefix if used. should the 0b be upper case instead?
+    pub upper_case: bool,
+    /// when we are padding to a target length, what character should we pad using?
+    pub pad_char: u8,
+    /// when we are padding to a target length, how long should our string be?
+    pub pad_length: usize,
+    /// should we include a 0b prefix? (also controlled by upper_case)
+    pub ob_prefix: bool,
+}
+
+impl BinOptions {
+    /// applies the various padding/prefix options while writing the `payload` string
+    pub fn with_stuff<W: uWrite + ?Sized>(
+        &self,
+        fmt: &mut Formatter<'_, W>,
+        payload: &str,
+    ) -> Result<(), <W as uWrite>::Error> {
+        let pad_before = self.ob_prefix && self.pad_char == b' ';
+
+        let pad = self.pad_length as isize
+            - (if self.ob_prefix { 2 } else { 0 } + payload.len()) as isize;
+
+        let do_pad = |fmt: &mut Formatter<'_, W>, pad: isize| -> Result<(), <W as uWrite>::Error> {
+            if pad > 0 {
+                for _ in 0..pad {
+                    // miri considers the `write_char` defined in `ufmt-write` v0.1.0 unsound
+                    // to workaround the issue we use `write_str` instead of `write_char`
+                    fmt.write_str(unsafe { str::from_utf8_unchecked(&[self.pad_char]) })?;
+                }
+            }
+            Ok(())
+        };
+
+        let do_prefix = |fmt: &mut Formatter<'_, W>,
+                         go: bool,
+                         upper_case: bool|
+         -> Result<(), <W as uWrite>::Error> {
+            if go {
+                fmt.write_str(if upper_case { "0B" } else { "0b" })
+            } else {
+                Ok(())
+            }
+        };
+        if pad_before {
+            do_pad(fmt, pad)?;
+            do_prefix(fmt, self.ob_prefix, self.upper_case)?;
+        } else {
+            do_prefix(fmt, self.ob_prefix, self.upper_case)?;
+            do_pad(fmt, pad)?;
+        }
+
+        fmt.write_str(payload)
+    }
+}
+
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+// just like std::fmt::LowerHex
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+pub trait uDisplayBin {
+    /// Formats the value using the given formatter
+    fn fmt_bin<W>(&self, _: &mut Formatter<'_, W>, options: BinOptions) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized;
+}
+
 /// Configuration for formatting
 #[allow(non_camel_case_types)]
 pub struct Formatter<'w, W>

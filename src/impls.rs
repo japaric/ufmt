@@ -1,4 +1,5 @@
 mod array;
+mod bin;
 mod core;
 mod hex;
 mod ixx;
