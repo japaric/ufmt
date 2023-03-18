@@ -49,7 +49,9 @@
 //!
 //! let mut s = String::new();
 //! let pair = Pair { x: 1, y: 2 };
+//! #[cfg(feature="std")]
 //! uwrite!(s, "{:?}", pair).unwrap();
+//! #[cfg(feature="std")]
 //! assert_eq!(s, "Pair { x: 1, y: 2 }");
 //! ```
 //!
@@ -62,7 +64,9 @@
 //! use ufmt::uwrite;
 //!
 //! let mut s = String::new();
+//! #[cfg(feature="std")]
 //! uwrite!(s, "{:#06x}", 0x42);
+//! #[cfg(feature="std")]
 //! assert_eq!(s, "0x0042");
 //! ```
 //!
