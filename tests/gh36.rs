@@ -19,6 +19,7 @@ struct Pair {
     y: u32,
 }
 
+#[cfg(feature="std")]
 #[test]
 fn uwrite() {
     let mut s = String::new();
@@ -28,6 +29,7 @@ fn uwrite() {
     assert_eq!(s, "Pair { x: 1, y: 2 }");
 }
 
+#[cfg(feature="std")]
 #[test]
 fn uwriteln() {
     let mut s = String::new();
