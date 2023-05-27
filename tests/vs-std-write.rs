@@ -364,3 +364,13 @@ fn hex() {
 
     // <i8 as std::fmt::Display>::fmt(-128)
 }
+
+#[test]
+fn char() {
+    // Miri is slow, so step over the range of valid chars sparsely
+    let step = if cfg!(miri) { 1 << 16 } else { 1 };
+
+    for c in ('\0'..=char::MAX).step_by(step) {
+        cmp!("{}", c);
+    }
+}
