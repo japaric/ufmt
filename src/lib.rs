@@ -410,6 +410,7 @@ where
 {
     type Writer = W;
 
+    #[cfg_attr(feature = "inline", inline(always))]
     fn do_as_formatter(
         &mut self,
         f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
@@ -424,6 +425,7 @@ where
 {
     type Writer = W;
 
+    #[cfg_attr(feature = "inline", inline(always))]
     fn do_as_formatter(
         &mut self,
         f: impl FnOnce(&mut Formatter<'_, W>) -> Result<(), W::Error>,
