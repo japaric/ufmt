@@ -32,7 +32,7 @@ pub trait uWrite {
     /// entire byte sequence was successfully written, and this method will not return until all
     /// data has been written or an error occurs.
     fn write_char(&mut self, c: char) -> Result<(), Self::Error> {
-        let mut buf: [u8; 4] = unsafe { uninitialized() };
+        let mut buf = [0; 4];
         self.write_str(c.encode_utf8(&mut buf))
     }
 }
