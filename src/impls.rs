@@ -1,5 +1,6 @@
 mod array;
 mod core;
+mod float;
 mod hex;
 mod ixx;
 mod nz;

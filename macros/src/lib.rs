@@ -263,6 +263,9 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
                         ox_prefix: #prefix})?;));
                 }
                 Piece::Str(_) => unreachable!(),
+                Piece::Float { decimal_places } => {
+                    exprs.push(quote!(ufmt::uDisplayFloat::fmt_float(#pat, f, #decimal_places)?;))
+                }
             }
         }
     }
@@ -326,6 +329,9 @@ enum Piece<'a> {
         pad_char: u8,
         pad_length: usize,
         prefix: bool,
+    },
+    Float {
+        decimal_places: u8,
     },
 }
 
@@ -456,74 +462,83 @@ fn parse(mut literal: &str, span: Span) -> parse::Result<Vec<Piece>> {
     Ok(pieces)
 }
 
-/// given a string src that begins with a text decimal number, return the tail (characters after the number) and the value of the decimal number
-fn split_number(src: &str) -> (&str, usize) {
-    let mut rval = 0;
-    let mut cursor = 0;
-
-    let chars = src.chars();
-    for (i, ch) in chars.enumerate() {
-        match ch.to_digit(10) {
-            Some(val) => {
-                rval = rval * 10 + val as usize;
-                cursor = i + 1;
-            }
-            None => break,
-        }
-    }
-
-    (&src[cursor..], rval)
-}
-
 /// parses the stuff after a `{:` into a [Piece] and the trailing `&str` (what comes after the `}`)
 fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
-    let (format, prefix) = if let Some(tail) = format.strip_prefix('#') {
-        (tail, true)
-    } else {
-        (format, false)
-    };
-    let (format, pad_char) = if let Some(tail) = format.strip_prefix('0') {
-        (tail, b'0')
-    } else {
-        (format, b' ')
-    };
-    let (format, pad_length) = if !format.is_empty()
-        && if let Some(ch) = format.chars().next() {
-            ch.is_ascii_digit()
-        } else {
-            false
-        } {
-        split_number(format)
-    } else {
-        (format, 0)
-    };
-    if let Some(tail) = format.strip_prefix("x}") {
-        Ok((
-            Piece::Hex {
-                upper_case: false,
-                pad_char,
-                pad_length,
-                prefix,
-            },
-            tail,
-        ))
-    } else if let Some(tail) = format.strip_prefix("X}") {
-        Ok((
-            Piece::Hex {
-                upper_case: true,
-                pad_char,
-                pad_length,
-                prefix,
-            },
-            tail,
-        ))
-    } else {
-        Err(parse::Error::new(
+    let err_piece = || -> syn::Error {
+        parse::Error::new(
             span,
-            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}` or '{:x}'",
-        ))
+            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}`, '{:x}' or '{:.<0..5>}'",
+        )
+    };
+    
+    let mut chars = format.chars();
+    match chars.next() {
+        None => Err(err_piece()),
+        Some(ch) => match ch {
+            'x' | 'X' | '0'..='9' | '#' => {
+                let (ch, prefix) = if ch == '#' {
+                    let ch = chars.next().ok_or(err_piece())?;
+                    (ch, true)
+                } else {
+                    (ch, false)
+                };
+                let (mut ch, pad_char) = if ch == '0' {
+                    let ch = chars.next().ok_or(err_piece())?;
+                    (ch, b'0')
+                } else {
+                    (ch, b' ')
+                };
+
+                let mut pad_length = 0_usize;
+                while ch.is_ascii_digit() {
+                    pad_length = pad_length * 10 + ch.to_digit(10).unwrap() as usize;
+                    ch = chars.next().ok_or(err_piece())?;
+                }
+
+                let upper_case = match ch {
+                    'x' => false,
+                    'X' => true,
+                    _ => return Err(err_piece()),
+                };
+                chars.next().ok_or(err_piece())?;
+                Ok((
+                    Piece::Hex {
+                        upper_case,
+                        pad_char,
+                        pad_length,
+                        prefix,
+                    },
+                    chars.as_str(),
+                ))
+            }
+            '.' => {
+                if let Some(ch) = chars.next() {
+                    match ch.to_digit(10) {
+                        Some(dp) => {
+                            match dp {
+                                0..=5 => {
+                                    chars.next().ok_or(err_piece())?;
+                                    Ok((
+                                        Piece::Float {
+                                            decimal_places: dp as u8,
+                                        },
+                                        chars.as_str(),
+                                    ))
+                                }
+                                _ => Err(err_piece()),
+                            }
+                        }
+                        None => Err(err_piece()),
+                    }
+                } else {
+                    Err(err_piece())
+                }
+            }
+            _ => Err(err_piece()),
+        },
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -596,6 +611,20 @@ mod tests {
             }]),
         );
 
+        assert_eq!(
+            super::parse("{:.0}", span).ok(),
+            Some(vec![Piece::Float {
+                decimal_places: 0,
+            }]),
+        );
+
+        assert_eq!(
+            super::parse("{:.5}", span).ok(),
+            Some(vec![Piece::Float {
+                decimal_places: 5,
+            }]),
+        );
+
         // escaped braces
         assert_eq!(
             super::parse("{{}} is not an argument", span).ok(),
@@ -629,12 +658,5 @@ mod tests {
         // escaped right brace
         assert_eq!(super::unescape("}}", span).ok(), Some(Cow::Borrowed("}")));
         assert_eq!(super::unescape("}} ", span).ok(), Some(Cow::Borrowed("} ")));
-    }
-
-    #[test]
-    fn split_number() {
-        let (a, b) = crate::split_number("42 card pickup");
-        assert_eq!(" card pickup", a);
-        assert_eq!(42, b);
     }
 }
