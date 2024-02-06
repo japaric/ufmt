@@ -43,7 +43,7 @@ From highest priority to lowest priority
 
 - Hexadecimal formatting (`{:x}`) of integer primitives (e.g. `i32`)
 
-- Simple f32 and f64 formating (`{:.0}`) ... (`{:.5}`)
+- Simple f32 and f64 formating (`{:.0}`) ... (`{:.9}`)
 
 # Minimum Supported Rust Version (MSRV)
 

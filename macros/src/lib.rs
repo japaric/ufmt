@@ -467,10 +467,10 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
     let err_piece = || -> syn::Error {
         parse::Error::new(
             span,
-            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}`, '{:x}' or '{:.<0..5>}'",
+            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}`, '{:x}' or '{:.<0..9>}'",
         )
     };
-    
+
     let mut chars = format.chars();
     match chars.next() {
         None => Err(err_piece()),
@@ -515,18 +515,13 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
                 if let Some(ch) = chars.next() {
                     match ch.to_digit(10) {
                         Some(dp) => {
-                            match dp {
-                                0..=5 => {
-                                    chars.next().ok_or(err_piece())?;
-                                    Ok((
-                                        Piece::Float {
-                                            decimal_places: dp as u8,
-                                        },
-                                        chars.as_str(),
-                                    ))
-                                }
-                                _ => Err(err_piece()),
-                            }
+                            chars.next().ok_or(err_piece())?;
+                            Ok((
+                                Piece::Float {
+                                    decimal_places: dp as u8,
+                                },
+                                chars.as_str(),
+                            ))
                         }
                         None => Err(err_piece()),
                     }
