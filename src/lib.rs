@@ -337,6 +337,22 @@ pub trait uDisplayHex {
         W: uWrite + ?Sized;
 }
 
+/// HEADS UP this is currently an implementation detail and not subject to semver guarantees.
+/// do NOT use this outside the `ufmt` crate
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+pub trait uDisplayFloat {
+    /// Formats the value using the given formatter
+    fn fmt_float<W>(
+        &self, 
+        _: &mut Formatter<'_, W>, 
+        decimal_places: usize, 
+        pad_length: usize
+    ) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized;
+}
+
 /// Configuration for formatting
 #[allow(non_camel_case_types)]
 pub struct Formatter<'w, W>
