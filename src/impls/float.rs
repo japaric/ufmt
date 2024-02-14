@@ -121,10 +121,10 @@ fn write_as_float_str<W>(fmt: &mut Formatter<'_, W>, mut left: u32, mut right: u
 where
     W: uWrite + ?Sized,
 {
-    // max 2**32 4_294_967_296 (10 digits) + 6 digits right dp
-    let mut buf = [b' '; 18]; // sign + '.' + 16 digits = 18
-    let p_buf = buf.as_mut_ptr();
-    
+    // max 2**32 4_294_967_296 (10 digits) + 6 digits right dp + '.' + '-' => 18 digits max
+    let mut buf = [core::mem::MaybeUninit::<u8>::uninit(); 18];
+    let p_buf = buf.as_mut_ptr().cast::<u8>();
+
     let len = buf.len();
     let mut idx = len;
     let dp_idx = if decimal_places == 0 {
