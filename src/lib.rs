@@ -343,7 +343,12 @@ pub trait uDisplayHex {
 #[allow(non_camel_case_types)]
 pub trait uDisplayFloat {
     /// Formats the value using the given formatter
-    fn fmt_float<W>(&self, _: &mut Formatter<'_, W>, decimal_places: u8) -> Result<(), W::Error>
+    fn fmt_float<W>(
+        &self, 
+        _: &mut Formatter<'_, W>, 
+        decimal_places: usize, 
+        pad_length: usize
+    ) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized;
 }

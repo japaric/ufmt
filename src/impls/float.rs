@@ -3,7 +3,12 @@ use core::{str::from_utf8_unchecked, slice::from_raw_parts};
 
 // Implementiert den Trait für f32
 impl uDisplayFloat for f32 {
-    fn fmt_float<W>(&self, fmt: &mut Formatter<'_, W>, decimal_places: u8) -> Result<(), W::Error>
+    fn fmt_float<W>(
+        &self, 
+        fmt: &mut Formatter<'_, W>, 
+        decimal_places: usize, 
+        pad_length: usize
+    ) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
@@ -35,7 +40,7 @@ impl uDisplayFloat for f32 {
         let left = f as u32;
         let right =  ((f - (left as f32)) * MUL_TAB[decimal_places as usize]) as u32;
 
-        write_as_float_str::<W>(fmt, left, right, decimal_places, is_neg)
+        write_as_float_str::<W>(fmt, left, right, decimal_places, is_neg, pad_length)
     }
 }
 
@@ -44,7 +49,7 @@ impl uDebug for f32 {
     where
         W: uWrite + ?Sized,
     {
-        self.fmt_float(fmt, 3)
+        self.fmt_float(fmt, 3, 0)
     }
 }
 
@@ -58,7 +63,12 @@ impl uDisplay for f32 {
 }
 
 impl uDisplayFloat for f64 {
-    fn fmt_float<W>(&self, fmt: &mut Formatter<'_, W>, decimal_places: u8) -> Result<(), W::Error>
+    fn fmt_float<W>(
+        &self, 
+        fmt: &mut Formatter<'_, W>, 
+        decimal_places: usize, 
+        pad_length: usize
+    ) -> Result<(), W::Error>
     where
         W: uWrite + ?Sized,
     {
@@ -90,7 +100,7 @@ impl uDisplayFloat for f64 {
         let left = f as u32;
         let right =  ((f - (left as f64)) * MUL_TAB[decimal_places as usize]) as u32;
     
-        write_as_float_str::<W>(fmt, left, right, decimal_places, is_neg)
+        write_as_float_str::<W>(fmt, left, right, decimal_places, is_neg, pad_length)
     }
 }
 
@@ -99,7 +109,7 @@ impl uDebug for f64 {
     where
         W: uWrite + ?Sized,
     {
-        self.fmt_float(fmt, 3)
+        self.fmt_float(fmt, 3, 0)
     }
 }
 
@@ -117,7 +127,13 @@ impl uDisplay for f64 {
 // the decimal point is shown separately.
 //
 // This routine then writes the floating point number correctly in the formatter
-fn write_as_float_str<W>(fmt: &mut Formatter<'_, W>, mut left: u32, mut right: u32, decimal_places: u8, is_neg: bool) -> Result<(), W::Error>
+fn write_as_float_str<W>(
+    fmt: &mut Formatter<'_, W>, 
+    mut left: u32, 
+    mut right: u32, 
+    decimal_places: usize, 
+    is_neg: bool,
+    pad_length: usize) -> Result<(), W::Error>
 where
     W: uWrite + ?Sized,
 {
@@ -170,13 +186,23 @@ where
         write_buf(idx, b'-');
     }
     
+    let length = len - idx;
+
+    // Padding, if necessary
+    if length > 0 && pad_length > length {
+        for _ in 0..(pad_length - length) {
+            fmt.write_char(' ')?;
+        }
+    }
+
     // Safety: This is necessary to avoid getting a panic branch
     // Since we know what has been added, we also know that they are correct utf8 characters.
     let s = unsafe {
-        let slice = from_raw_parts(p_buf.add(idx), len - idx);
+        let slice = from_raw_parts(p_buf.add(idx), length);
         from_utf8_unchecked(slice)
     };
     fmt.write_str(s)
+
 }
 
 
@@ -185,20 +211,21 @@ where
 mod tests {
     use crate::Formatter;
 
-    fn f_str(left: u32, right: u32, dp: u8, is_neg: bool) -> String {
+    fn f_str(left: u32, right: u32, dp: usize, is_neg: bool, pad_length: usize) -> String {
         let mut s = String::new();
         let mut fmt = Formatter::new(&mut s);
-        super::write_as_float_str(&mut fmt, left, right, dp, is_neg).unwrap();
+        super::write_as_float_str(&mut fmt, left, right, dp, is_neg, pad_length).unwrap();
         s
     }
     
     #[test]
     fn test_u64_to_str() {
-        assert_eq!(f_str(0, 0, 0, false), "0");
-        assert_eq!(f_str(0, 0, 1, false), "0.0");
-        assert_eq!(f_str(0, 0, 6, false), "0.000000");
-        assert_eq!(f_str(0, 2, 6, false), "0.000002");
-        assert_eq!(f_str(123, 457, 3, false), "123.457");
+        assert_eq!(f_str(0, 0, 0, false, 0), "0");
+        assert_eq!(f_str(0, 0, 1, false, 0), "0.0");
+        assert_eq!(f_str(0, 0, 6, false, 0), "0.000000");
+        assert_eq!(f_str(0, 2, 6, false, 0), "0.000002");
+        assert_eq!(f_str(123, 457, 3, false, 0), "123.457");
+        assert_eq!(f_str(123, 457, 3, false, 10), "   123.457");
     }
 
 }

@@ -263,8 +263,13 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
                         ox_prefix: #prefix})?;));
                 }
                 Piece::Str(_) => unreachable!(),
-                Piece::Float { decimal_places } => {
-                    exprs.push(quote!(ufmt::uDisplayFloat::fmt_float(#pat, f, #decimal_places)?;))
+                Piece::Float { decimal_places, pad_length } => {
+                    exprs.push(quote!(ufmt::uDisplayFloat::fmt_float(
+                        #pat, 
+                        f, 
+                        #decimal_places, 
+                        #pad_length
+                    )?;))
                 }
             }
         }
@@ -331,7 +336,8 @@ enum Piece<'a> {
         prefix: bool,
     },
     Float {
-        decimal_places: u8,
+        decimal_places: usize,
+        pad_length: usize,
     },
 }
 
@@ -452,22 +458,23 @@ fn parse(mut literal: &str, span: Span) -> parse::Result<Vec<Piece>> {
                 } else {
                     return Err(parse::Error::new(
                         span,
-                        "invalid format string: expected `{{`, `{}`, `{:?}` or `{:#?}`",
+                        INVALID_FORMAT_STR,
                     ));
                 }
             }
         }
     }
-
     Ok(pieces)
 }
+
+const INVALID_FORMAT_STR: &str = "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}`, '{:x}' or '{:.<0..6>}'";
 
 /// parses the stuff after a `{:` into a [Piece] and the trailing `&str` (what comes after the `}`)
 fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
     let err_piece = || -> syn::Error {
         parse::Error::new(
             span,
-            "invalid format string: expected `{{`, `{}`, `{:?}`, `{:#?}`, '{:x}' or '{:.<0..6>}'",
+            INVALID_FORMAT_STR,
         )
     };
 
@@ -487,18 +494,26 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
         (ch, b' ')
     };
 
-    let mut pre_cmd_no = 0_usize;
+    let mut pad_length = 0_usize;
     while ch.is_ascii_digit() {
-        pre_cmd_no = pre_cmd_no * 10 + ch.to_digit(10).unwrap() as usize;
+        pad_length = pad_length * 10 + ch.to_digit(10).unwrap() as usize;
         ch = chars.next().ok_or(err_piece())?;
     }
 
-    let cmd = ch;
+    let cmd = match ch {
+        '.' => Some('.'),
+        'x' => Some('x'),
+        'X' => Some('X'),
+        _ => None,
+    };
 
-    let mut ch = chars.next().ok_or(err_piece())?;
-    let mut post_cmd_no = 0_usize;
+    if cmd.is_some() {
+        ch = chars.next().ok_or(err_piece())?;
+    }
+
+    let mut decimal_places = 0_usize;
     while ch.is_ascii_digit() {
-        post_cmd_no = post_cmd_no * 10 + ch.to_digit(10).unwrap() as usize;
+        decimal_places = decimal_places * 10 + ch.to_digit(10).unwrap() as usize;
         ch = chars.next().ok_or(err_piece())?;
     }
 
@@ -507,35 +522,39 @@ fn parse_colon(format: &str, span: Span) -> parse::Result<(Piece, &str)> {
     }
 
     match cmd {
-        'x' => Ok((
-            Piece::Hex {
-                upper_case: false,
-                pad_char,
-                pad_length: pre_cmd_no,
-                prefix,
-            },
-            chars.as_str(),
-        )),
-        'X' => Ok((
-            Piece::Hex {
-                upper_case: true,
-                pad_char,
-                pad_length: pre_cmd_no,
-                prefix,
-            },
-            chars.as_str(),
-        )),
-        '.' => if pad_char == b' ' && pre_cmd_no == 0 && prefix == false && post_cmd_no < 7{
-            Ok((
-                Piece::Float {
-                    decimal_places: post_cmd_no as u8,
+        Some(cmd) => match cmd {
+            'x' => Ok((
+                Piece::Hex {
+                    upper_case: false,
+                    pad_char,
+                    pad_length,
+                    prefix,
                 },
                 chars.as_str(),
-            ))   
-        } else {
-            Err(err_piece())
+            )),
+            'X' => Ok((
+                Piece::Hex {
+                    upper_case: true,
+                    pad_char,
+                    pad_length,
+                    prefix,
+                },
+                chars.as_str(),
+            )),
+            '.' => if pad_char == b' ' && prefix == false && decimal_places < 7{
+                Ok((
+                    Piece::Float {
+                        decimal_places,
+                        pad_length,
+                    },
+                    chars.as_str(),
+                ))   
+            } else {
+                Err(err_piece())
+            }
+            _ => Err(err_piece()),
         }
-        _ => Err(err_piece()),
+        None => Err(err_piece()),
     }
 }
 
@@ -615,6 +634,7 @@ mod tests {
             super::parse("{:.0}", span).ok(),
             Some(vec![Piece::Float {
                 decimal_places: 0,
+                pad_length: 0,
             }]),
         );
 
@@ -622,6 +642,15 @@ mod tests {
             super::parse("{:.6}", span).ok(),
             Some(vec![Piece::Float {
                 decimal_places: 6,
+                pad_length: 0, 
+            }]),
+        );
+
+        assert_eq!(
+            super::parse("{:17.6}", span).ok(),
+            Some(vec![Piece::Float {
+                decimal_places: 6,
+                pad_length: 17, 
             }]),
         );
 
